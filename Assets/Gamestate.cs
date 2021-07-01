@@ -88,6 +88,7 @@ public struct Component
     public ComponentType ComponentType;
     public float Size;
     public float Quality;
+    public float SecondsOfDamage;
 }
 
 public struct GameTurn
@@ -119,6 +120,28 @@ static class GameplayFunctions
         if (doTurn.PlayerActions.Count != game.Players.Count)
             throw new UnityException("Players in gameturn did not match players in game");
 
+        for (int i = 0; i < doTurn.PlayerActions.Count; i++)
+        {
+            int playerIndex = i;
+            if (game.Gamestates.Count%2 == 1)
+            {
+                playerIndex = doTurn.PlayerActions.Count - i - 1; //invert player order every other turn
+            }
+            Player player = game.Players[playerIndex];
+            PlayerAction playerAction = doTurn.PlayerActions[playerIndex];
+
+            for (int j = 0; j < playerAction.VesselCommands.Count; j++)
+            {
+                Command command = playerAction.VesselCommands[j];
+                GameplayFunctions.DoCommand(command, game, nextGamestate, player);
+            }
+        }
+
         return sourceGamestate;
+    }
+
+    public static void DoCommand(Command command, Game game, Gamestate gamestate, Player commandingPlayer)
+    {
+        
     }
 }
