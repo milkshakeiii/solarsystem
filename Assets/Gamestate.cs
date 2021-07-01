@@ -23,6 +23,7 @@ public struct Player
     public string Name;
     public float ELO;
     public List<Vessel> Deck;
+    public List<float> ResearchThresholds;
     public int TeamNumber;
 }
 
@@ -129,18 +130,28 @@ static class GameplayFunctions
             }
             Player player = game.Players[playerIndex];
             PlayerAction playerAction = doTurn.PlayerActions[playerIndex];
+            PlayerProgress playerProgress = nextGamestate.PlayerProgresses[playerIndex];
+
+            if (!(playerProgress.Vessels.Count == playerAction.VesselCommands.Count))
+                throw new UnityException("Player commands did not match player vessels");
 
             for (int j = 0; j < playerAction.VesselCommands.Count; j++)
             {
                 Command command = playerAction.VesselCommands[j];
-                GameplayFunctions.DoCommand(command, game, nextGamestate, player);
+                Vessel vessel = playerProgress.Vessels[j];
+                GameplayFunctions.DoCommand(command, vessel, game, nextGamestate, player, playerProgress);
             }
         }
 
         return sourceGamestate;
     }
 
-    public static void DoCommand(Command command, Game game, Gamestate gamestate, Player commandingPlayer)
+    public static void DoCommand(Command command,
+                                 Vessel vessel,
+                                 Game game,
+                                 Gamestate gamestate,
+                                 Player commandingPlayer,
+                                 PlayerProgress playerProgress)
     {
         
     }
