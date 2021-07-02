@@ -240,7 +240,7 @@ static class GameplayFunctions
             {
                 Command command = playerAction.VesselCommands[j];
                 Vessel vessel = playerProgress.Vessels[j];
-                GameplayFunctions.DoCommand(command, vessel, game, nextGamestate, player, playerProgress);
+                GameplayFunctions.DoCommand(command, ref vessel, game, ref nextGamestate, player, ref playerProgress);
             }
         }
 
@@ -248,11 +248,11 @@ static class GameplayFunctions
     }
 
     public static void DoCommand(Command command,
-                                 Vessel vessel,
+                                 ref Vessel vessel,
                                  Game game,
-                                 Gamestate gamestate,
+                                 ref Gamestate gamestate,
                                  Player commandingPlayer,
-                                 PlayerProgress playerProgress)
+                                 ref PlayerProgress playerProgress)
     {
         //rotation
         bool rightRotation = command.TargetRotation >= 0;
@@ -265,5 +265,8 @@ static class GameplayFunctions
             vessel.facing += actualRotationAmount;
         else
             vessel.facing -= actualRotationAmount;
+
+        //movement
+
     }
 }
