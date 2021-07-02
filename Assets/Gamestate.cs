@@ -46,16 +46,78 @@ public struct Position
 {
     public float x;
     public float y;
+
+    public static Position Up()
+    {
+        return new Position
+        {
+            x = 0,
+            y = 1
+        };
+    }
+
+    public Vector2 ToVector2()
+    {
+        return new Vector2(x, y);
+    }
 }
 
 [Serializable]
 public struct Vessel
 {
     public Position Position;
+    public float facing;
 
-    public List<Component> Components;
+    public List<Engine> Engines;
+    public List<Laser> Lasers;
+    public List<Collector> Collectors;
+    public List<PowerCore> PowerCores;
+    public List<Shipyard> Shipyards;
     public List<PixelPosition> LightHullPositions;
+    public List<float> LightHullSecondsOfDamage;
     public List<PixelPosition> DarkHullPositions;
+    public List<float> DarkHullSecondsOfDamage;
+
+
+    public float EnergyToTurnRadiansPerSecondConversion()
+    {
+        return (float)Math.PI*2 / Weight();
+    }
+
+    public List<Component> Components()
+    {
+        List<Component> components = new List<Component>();
+        components.AddRange(Engines);
+        components.AddRange(Lasers);
+        components.AddRange(Collectors);
+        components.AddRange(PowerCores);
+        components.AddRange(Shipyards);
+        return components;
+    }
+
+    public float Weight()
+    {
+        float componentsWeight = 0;
+        foreach (Component component in Components())
+        {
+            componentsWeight += component.Size * component.Size;
+        }
+        return LightHullPositions.Count + DarkHullPositions.Count * 2 + componentsWeight;
+    }
+
+    public float UnitsPerSecondInDirection(Position direction)
+    {
+        float directionFacing = Vector2.Angle(Vector2.up, direction.ToVector2()) * Mathf.Deg2Rad;
+        float result = 0;
+        foreach (Engine engine in Engines)
+        {
+            float facingDifference = directionFacing % (2 * (float)Math.PI) - facing % (2 * (float)Math.PI);
+            float facingDifferenceClamped = Mathf.Clamp(facingDifference, -(float)Math.PI, (float)Math.PI);
+            float facingDifferenceRatio = Math.Abs(facingDifferenceClamped / (float)Math.PI);
+            result += (1 - facingDifferenceRatio) * engine.UnitsPerSecondStraight();
+        }
+        return result;
+    }
 }
 
 [Serializable]
@@ -72,24 +134,58 @@ public struct Asteroid
     public float Size;
 }
 
-public enum ComponentType
-{
-    shipyard = 0,
-    collector = 1,
-    laser = 3,
-    engine = 4,
-    powerCore = 2
-}
-
 [Serializable]
-public struct Component
+public class Component
 {
     public PixelPosition RootPixelPosition; //relative to parent vessel
     public List<PixelPosition> PixelPositions; //relative to root pixel position
-    public ComponentType ComponentType;
+    public List<float> SecondsOfDamage;
+    public float facing; //up is 0 or 2pi
     public float Size;
     public float Quality;
-    public float SecondsOfDamage;
+}
+
+public class PowerCore : Component
+{
+    public float StoredEnergy;
+
+    public float MaxEnergy()
+    {
+        return Size;
+    }
+
+    public float EnergyPerSecond()
+    {
+        return Quality;
+    }
+}
+
+public class Engine : Component
+{
+    public float UnitsPerSecondStraight()
+    {
+        return Size * 5;
+    }
+
+    public float EnergyCostPerSecond()
+    {
+        return Size * (1 / (1 + Quality));
+    }
+}
+
+public class Laser : Component
+{
+
+}
+
+public class Collector : Component
+{
+
+}
+
+public class Shipyard : Component
+{
+
 }
 
 public struct GameTurn
@@ -107,7 +203,7 @@ public struct PlayerAction
 public struct Command
 {
     public float TargetRotation;
-    public float TargetMoveAmount;
+    public float TargetDisplacement;
     public List<bool> ActivateComponents;
 }
 
@@ -153,6 +249,7 @@ static class GameplayFunctions
                                  Player commandingPlayer,
                                  PlayerProgress playerProgress)
     {
-        
+        //rotation
+
     }
 }
