@@ -69,9 +69,9 @@ public struct Vessel
     public float facing;
 
     public List<Engine> Engines;
+    public PowerCore PowerCore;
     public List<Laser> Lasers;
     public List<Collector> Collectors;
-    public List<PowerCore> PowerCores;
     public List<Shipyard> Shipyards;
     public List<PixelPosition> LightHullPositions;
     public List<float> LightHullSecondsOfDamage;
@@ -79,9 +79,14 @@ public struct Vessel
     public List<float> DarkHullSecondsOfDamage;
 
 
-    public float EnergyToTurnRadiansPerSecondConversion()
+    public static float MaxPortionMaxEnergySpentTurningPerSecond()
     {
-        return (float)Math.PI*2 / Weight();
+        return 1f / 6f;
+    }
+
+    public static float EnergyToRadiansTurningCoversion()
+    {
+        return 1f;
     }
 
     public List<Component> Components()
@@ -90,8 +95,8 @@ public struct Vessel
         components.AddRange(Engines);
         components.AddRange(Lasers);
         components.AddRange(Collectors);
-        components.AddRange(PowerCores);
         components.AddRange(Shipyards);
+        components.Add(PowerCore);
         return components;
     }
 
@@ -239,7 +244,7 @@ static class GameplayFunctions
             }
         }
 
-        return sourceGamestate;
+        return nextGamestate;
     }
 
     public static void DoCommand(Command command,
@@ -250,6 +255,15 @@ static class GameplayFunctions
                                  PlayerProgress playerProgress)
     {
         //rotation
-
+        bool rightRotation = command.TargetRotation >= 0;
+        float desiredRotationAmount = Math.Abs(command.TargetRotation);
+        float energyUsed = Math.Min(vessel.PowerCore.StoredEnergy, Vessel.MaxPortionMaxEnergySpentTurningPerSecond());
+        float possibleRotationAmount = energyUsed * Vessel.EnergyToRadiansTurningCoversion();
+        float actualRotationAmount = Math.Min(desiredRotationAmount, possibleRotationAmount);
+        vessel.PowerCore.StoredEnergy -= energyUsed;
+        if (rightRotation)
+            vessel.facing += actualRotationAmount;
+        else
+            vessel.facing -= actualRotationAmount;
     }
 }
