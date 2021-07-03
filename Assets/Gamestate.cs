@@ -214,7 +214,20 @@ public class Engine : Component
 
 public class Laser : Component
 {
+    public float EnergyCostPerSecond()
+    {
+        return Size;
+    }
 
+    public float Width()
+    {
+        return Size;
+    }
+
+    public float Length()
+    {
+        return Quality * 5;
+    }
 }
 
 public class Collector : Component
@@ -439,7 +452,15 @@ static class GameplayFunctions
             Laser laser = vessel.Lasers[i];
             if (command.ActivateLasers[i])
             {
+                float energyCost = laser.EnergyCostPerSecond() * game.SecondsPerTick();
+                if (vessel.PowerCore.StoredEnergy > energyCost)
+                {
 
+                    //TODO: zap zap
+
+
+                    vessel.PowerCore.StoredEnergy -= energyCost; // !
+                }
             }
         }
     }
