@@ -66,6 +66,16 @@ public struct Position
     {
         return new Vector2(x, y);
     }
+
+    public Position Rotate(float radians)
+    {
+        float sin = Mathf.Sin(radians);
+        float cos = Mathf.Cos(radians);
+        return new Position {
+            x = cos * x - sin * y,
+            y = sin * x + cos * y
+        };
+    }
 }
 
 [Serializable]
@@ -151,6 +161,13 @@ public struct Vessel
     public float BuildCost()
     {
         return Weight();
+    }
+
+    public Position PixelPositionToWorldPosition(PixelPosition pixelPosition)
+    {
+        Position floatPosition = new Position { x = pixelPosition.x, y = pixelPosition.y };
+        Position rotatedFloatPosition = floatPosition.Rotate(facing);
+        return new Position { x = Position.x + rotatedFloatPosition.x, y = Position.y + rotatedFloatPosition.y };
     }
 }
 
@@ -343,6 +360,8 @@ static class GameplayFunctions
                                  ref PlayerProgress playerProgress)
     {
         //rotation
+        List<Vector2> previousLaserPositions;
+        
         bool rightRotation = command.TargetRotation >= 0;
         float desiredRotationAmount = Math.Abs(command.TargetRotation);
         float energyUsed = Math.Min(vessel.PowerCore.StoredEnergy, Vessel.MaxPortionMaxEnergySpentTurningPerSecond());
@@ -455,9 +474,7 @@ static class GameplayFunctions
                 float energyCost = laser.EnergyCostPerSecond() * game.SecondsPerTick();
                 if (vessel.PowerCore.StoredEnergy > energyCost)
                 {
-
-                    //TODO: zap zap
-
+                    
 
                     vessel.PowerCore.StoredEnergy -= energyCost; // !
                 }
