@@ -424,7 +424,7 @@ static class GameplayFunctions
                 bool asteroidExistsInRange = false;
                 foreach (Asteroid asteroid in gamestate.Asteroids)
                 {
-                    Vector2 collectorSpacePosition = vessel.Position.ToVector2() + collector.RootPixelPositions.ToVector2();
+                    Vector2 collectorSpacePosition = vessel.Position.ToVector2() + collector.RootPixelPosition.ToVector2();
                     float squareDistanceToAsteroid = Vector2.SqrMagnitude(collectorSpacePosition - asteroid.Position.ToVector2());
                     bool inRange = squareDistanceToAsteroid < collector.CollectionRadius() * collector.CollectionRadius();
                     asteroidExistsInRange = asteroidExistsInRange || inRange;
