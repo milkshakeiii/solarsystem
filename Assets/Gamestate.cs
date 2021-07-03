@@ -15,6 +15,11 @@ public struct Game
     public float StartTime; //seconds since epoch
     public float TimeControl; //seconds
     public float TimeIncrement; //seconds
+
+    public float SecondsPerTick()
+    {
+        return SecondsPerTurn / StatesPerTurn;
+    }
 }
 
 [Serializable]
@@ -38,7 +43,8 @@ public struct Gamestate
 public struct PlayerProgress
 {
     public List<Vessel> Vessels;
-    public float Research; //[0, 1]
+    public float Research;
+    public float StoredResources;
 }
 
 [Serializable]
@@ -84,9 +90,9 @@ public struct Vessel
         return 1f / 6f;
     }
 
-    public static float EnergyToRadiansTurningCoversion()
+    public float EnergyToRadiansTurningCoversion()
     {
-        return 1f;
+        return Weight();
     }
 
     public List<Component> Components()
@@ -99,7 +105,7 @@ public struct Vessel
         components.Add(PowerCore);
         return components;
     }
-
+    
     public float Weight()
     {
         float componentsWeight = 0;
@@ -119,9 +125,32 @@ public struct Vessel
             float facingDifference = directionFacing % (2 * (float)Math.PI) - facing % (2 * (float)Math.PI);
             float facingDifferenceClamped = Mathf.Clamp(facingDifference, -(float)Math.PI, (float)Math.PI);
             float facingDifferenceRatio = Math.Abs(facingDifferenceClamped / (float)Math.PI);
-            result += (1 - facingDifferenceRatio) * engine.UnitsPerSecondStraight();
+            result += (1 - facingDifferenceRatio) * engine.ThrustPerSecond() * (1 / Weight());
         }
         return result;
+    }
+
+    public float EnergyCostPerSecondInDirection(Position direction)
+    {
+        float directionFacing = Vector2.Angle(Vector2.up, direction.ToVector2()) * Mathf.Deg2Rad;
+        float result = 0;
+        foreach (Engine engine in Engines)
+        {
+            float facingDifference = directionFacing % (2 * (float)Math.PI) - facing % (2 * (float)Math.PI);
+            if (facingDifference < (float)Math.PI / 2)
+                result += engine.EnergyCostPerSecond();
+        }
+        return result;
+    }
+
+    public float BuildTime()
+    {
+        return Weight();
+    }
+
+    public float BuildCost()
+    {
+        return Weight();
     }
 }
 
@@ -130,6 +159,11 @@ public struct PixelPosition
 {
     public int x;
     public int y;
+
+    public Vector2 ToVector2()
+    {
+        return new Vector2(x, y);
+    }
 }
 
 [Serializable]
@@ -167,7 +201,7 @@ public class PowerCore : Component
 
 public class Engine : Component
 {
-    public float UnitsPerSecondStraight()
+    public float ThrustPerSecond()
     {
         return Size * 5;
     }
@@ -185,15 +219,49 @@ public class Laser : Component
 
 public class Collector : Component
 {
+    public float CollectionRadius()
+    {
+        return Size/2;
+    }
 
+    public float CollectionEfficiency()
+    {
+        return Quality;
+    }
+
+    public float MaximumAsteroidSize()
+    {
+        return Size;
+    }
+
+    public float ResourcesPerSecondForAsteroid(Asteroid asteroid)
+    {
+        return asteroid.Size * Quality;
+    }
+
+    public float EnergyCostPerSecond()
+    {
+        return Size;
+    }
 }
 
 public class Shipyard : Component
 {
+    public float SecondOfVesselBuilt;
+    public bool BuildInProgress;
 
+    public float EnergyCostPerSecond()
+    {
+        return Size;
+    }
+
+    public float BuildSpeed()
+    {
+        return Quality;
+    }
 }
 
-public struct GameTurn
+public struct GameTick
 {
     public List<PlayerAction> PlayerActions;
 }
@@ -208,13 +276,20 @@ public struct PlayerAction
 public struct Command
 {
     public float TargetRotation;
-    public float TargetDisplacement;
-    public List<bool> ActivateComponents;
+    public Position TargetDisplacement;
+
+    public List<bool> RunShipyards;
+    public List<bool> BeginShipyardRuns;
+    public List<bool> CancelShipyardRuns;
+    public List<Vessel> VesselsToBuild;
+
+    public List<bool> ActivateCollectors;
+    public List<bool> ActivateLasers;
 }
 
 static class GameplayFunctions
 {
-    public static Gamestate NextGamestate(Game game, Gamestate sourceGamestate, GameTurn doTurn)
+    public static Gamestate NextGamestate(Game game, Gamestate sourceGamestate, GameTick doTurn)
     {
         string sourceJson = JsonUtility.ToJson(sourceGamestate); //for purpose of making a deep copy
         Gamestate nextGamestate = JsonUtility.FromJson<Gamestate>(sourceJson);
@@ -258,15 +333,114 @@ static class GameplayFunctions
         bool rightRotation = command.TargetRotation >= 0;
         float desiredRotationAmount = Math.Abs(command.TargetRotation);
         float energyUsed = Math.Min(vessel.PowerCore.StoredEnergy, Vessel.MaxPortionMaxEnergySpentTurningPerSecond());
-        float possibleRotationAmount = energyUsed * Vessel.EnergyToRadiansTurningCoversion();
+        float possibleRotationAmount = energyUsed * vessel.EnergyToRadiansTurningCoversion();
         float actualRotationAmount = Math.Min(desiredRotationAmount, possibleRotationAmount);
-        vessel.PowerCore.StoredEnergy -= energyUsed;
+        vessel.PowerCore.StoredEnergy -= energyUsed; // !
         if (rightRotation)
-            vessel.facing += actualRotationAmount;
+            vessel.facing += actualRotationAmount; // !
         else
-            vessel.facing -= actualRotationAmount;
+            vessel.facing -= actualRotationAmount; // !
 
         //movement
+        float unitsPerSecondInDesiredDirection = vessel.UnitsPerSecondInDirection(command.TargetDisplacement);
+        float desiredMoveAmount = command.TargetDisplacement.ToVector2().magnitude;
+        float possibleMoveAmount = game.SecondsPerTick() * unitsPerSecondInDesiredDirection;
+        float energyCostPerSecondInDirection = vessel.EnergyCostPerSecondInDirection(command.TargetDisplacement);
+        float secondsOfEnergyAvailable = vessel.PowerCore.StoredEnergy / energyCostPerSecondInDirection;
+        float secondsOfEnergyAvailableThisTick = Math.Min(game.SecondsPerTick(), secondsOfEnergyAvailable);
+        float moveAmountIfSufficientEnergy = Math.Min(desiredMoveAmount, possibleMoveAmount);
+        float actualMoveAmount = moveAmountIfSufficientEnergy * (secondsOfEnergyAvailableThisTick / game.SecondsPerTick());
+        Vector2 actualDisplacement = command.TargetDisplacement.ToVector2().normalized * actualMoveAmount;
+        vessel.PowerCore.StoredEnergy -= (actualMoveAmount / desiredMoveAmount) * game.SecondsPerTick() * energyCostPerSecondInDirection; // !
+        vessel.Position.x += actualDisplacement.x;
+        vessel.Position.y += actualDisplacement.y;
 
+        //shipyards
+        for (int i = 0; i < command.RunShipyards.Count; i++)
+        {
+            Shipyard shipyard = vessel.Shipyards[i];
+            if (command.RunShipyards[i])
+            {
+                Vessel vesselToProduce = command.VesselsToBuild[i];
+                if (command.BeginShipyardRuns[i])
+                {
+                    bool resourcesAvailable = playerProgress.StoredResources >= vesselToProduce.BuildCost();
+                    if (resourcesAvailable)
+                    {
+                        playerProgress.StoredResources -= vesselToProduce.BuildCost();
+                        shipyard.BuildInProgress = true;
+                    }
+                }
+                if (command.RunShipyards[i] && shipyard.BuildInProgress)
+                {
+                    float secondsOfEnergyAvailableForShipyard = vessel.PowerCore.StoredEnergy / shipyard.EnergyCostPerSecond();
+                    float secondsOfEnergyAvailableForShipyardThisTick = Math.Min(game.SecondsPerTick(), secondsOfEnergyAvailableForShipyard);
+                    float buildSecondsRemaining = (vessel.BuildTime() - shipyard.SecondOfVesselBuilt) / shipyard.BuildSpeed();
+                    float secondsOfEnergySpent = Math.Min(secondsOfEnergyAvailableForShipyardThisTick, buildSecondsRemaining);
+                    float energySpent = secondsOfEnergySpent * shipyard.EnergyCostPerSecond();
+                    vessel.PowerCore.StoredEnergy -= energySpent; // !
+                    shipyard.SecondOfVesselBuilt += secondsOfEnergySpent * shipyard.BuildSpeed(); // !
+                    if (shipyard.SecondOfVesselBuilt >= vessel.BuildTime())
+                    {
+                        shipyard.SecondOfVesselBuilt = 0; // !
+                        shipyard.BuildInProgress = false; // !
+                        playerProgress.Vessels.Add(vesselToProduce); // !
+                        vesselToProduce.Position = new Position
+                        {
+                            x = vessel.Position.x + shipyard.RootPixelPosition.x,
+                            y = vessel.Position.y + shipyard.RootPixelPosition.y
+                        }; // !
+                    }
+                }
+                if (command.CancelShipyardRuns[i])
+                {
+                    shipyard.SecondOfVesselBuilt = 0; // !
+                    shipyard.BuildInProgress = false; // !
+                }
+            }
+        }
+
+        //collectors
+        for (int i = 0; i < command.ActivateCollectors.Count; i++)
+        {
+            Collector collector = vessel.Collectors[i];
+            if (command.ActivateCollectors[i])
+            {
+                List<Asteroid> asteroidsInRange = new List<Asteroid>();
+                Asteroid biggestAsteroid = gamestate.Asteroids[0];
+                bool asteroidExistsInRange = false;
+                foreach (Asteroid asteroid in gamestate.Asteroids)
+                {
+                    Vector2 collectorSpacePosition = vessel.Position.ToVector2() + collector.RootPixelPositions.ToVector2();
+                    float squareDistanceToAsteroid = Vector2.SqrMagnitude(collectorSpacePosition - asteroid.Position.ToVector2());
+                    bool inRange = squareDistanceToAsteroid < collector.CollectionRadius() * collector.CollectionRadius();
+                    asteroidExistsInRange = asteroidExistsInRange || inRange;
+                    if (inRange && asteroid.Size > biggestAsteroid.Size)
+                    {
+                        biggestAsteroid = asteroid;
+                    }
+                }
+                if (asteroidExistsInRange)
+                {
+                    float resourcesGained = collector.ResourcesPerSecondForAsteroid(biggestAsteroid) * game.SecondsPerTick();
+                    float energyCost = collector.EnergyCostPerSecond() * game.SecondsPerTick();
+                    if (vessel.PowerCore.StoredEnergy > energyCost)
+                    {
+                        vessel.PowerCore.StoredEnergy -= energyCost; // !
+                        playerProgress.StoredResources += resourcesGained; // !
+                    }
+                }
+            }
+        }
+
+        //lasers
+        for (int i = 0; i < command.ActivateLasers.Count; i++)
+        {
+            Laser laser = vessel.Lasers[i];
+            if (command.ActivateLasers[i])
+            {
+
+            }
+        }
     }
 }
