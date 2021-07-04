@@ -480,6 +480,7 @@ static class GameplayFunctions
                 float energyCost = laser.EnergyCostPerSecond() * game.SecondsPerTick();
                 if (vessel.PowerCore.StoredEnergy > energyCost)
                 {
+                    //calculate beam box
                     Position preRotationCenter = previousLaserPositions[i];
                     
                     Position currentCenter = vessel.PixelPositionToWorldPosition(laser.RootPixelPosition);
@@ -522,6 +523,20 @@ static class GameplayFunctions
                     float top = Mathf.Max(extremeYs.ToArray());
                     float left = Mathf.Min(extremeXs.ToArray());
                     float right = Mathf.Max(extremeXs.ToArray());
+
+                    //boxcast into enemy pixels
+                    for (int j = 0; j < game.Players.Count; j++)
+                    {
+                        Player otherPlayer = game.Players[j];
+                        PlayerProgress otherPlayerProgress = gamestate.PlayerProgresses[j];
+                        if (otherPlayer.TeamNumber != commandingPlayer.TeamNumber)
+                        {
+                            for (int k = 0; k < otherPlayerProgress.Vessels.Count; k++)
+                            {
+
+                            }
+                        }
+                    }
 
                     vessel.PowerCore.StoredEnergy -= energyCost; // !
                 }
