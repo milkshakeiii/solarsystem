@@ -359,12 +359,13 @@ static class GameplayFunctions
                                  Player commandingPlayer,
                                  ref PlayerProgress playerProgress)
     {
-        //save Laser positions
+        //save Laser positions and facing for later
         List<Position> previousLaserPositions = new List<Position>();
         foreach (Laser laser in vessel.Lasers)
         {
             previousLaserPositions.Add(vessel.PixelPositionToWorldPosition(laser.RootPixelPosition));
         }
+        float previousVesselFacing = vessel.facing;
 
         //rotation
         bool rightRotation = command.TargetRotation >= 0;
@@ -480,16 +481,48 @@ static class GameplayFunctions
                 if (vessel.PowerCore.StoredEnergy > energyCost)
                 {
                     Position preRotationCenter = previousLaserPositions[i];
+                    
                     Position currentCenter = vessel.PixelPositionToWorldPosition(laser.RootPixelPosition);
                     List<float> extremeXs = new List<float>();
                     List<float> extremeYs = new List<float>();
                     Position widthVector = new Position { x = 0, y = laser.Width() };
-                    Position nearCorner12Offset = widthVector.Rotate(vessel.facing);
-                    nearCorner12Offset = nearCorner12Offset.Rotate(laser.facing);
-                    Position nearCorner34Offset = nearCorner12Offset.Rotate((float)Math.PI);
-                    
+                    Position laserWorldPosition = vessel.PixelPositionToWorldPosition(laser.RootPixelPosition);
+
+                    Position previousNearLaserBeamCornersStraight = widthVector.Rotate(previousVesselFacing);
+                    previousNearLaserBeamCornersStraight = previousNearLaserBeamCornersStraight.Rotate(laser.facing);
+                    Position previousNearLaserBeamCornersLeft = previousNearLaserBeamCornersStraight.Rotate(-(1/2)*(float)Math.PI);
+                    Position previousNearLaserBeamCornersRight = previousNearLaserBeamCornersStraight.Rotate((1/2)*(float)Math.PI);
+                    extremeXs.Add(previousNearLaserBeamCornersLeft.x + laserWorldPosition.x);
+                    extremeXs.Add(previousNearLaserBeamCornersRight.x + laserWorldPosition.x);
+                    extremeYs.Add(previousNearLaserBeamCornersLeft.y + laserWorldPosition.y);
+                    extremeYs.Add(previousNearLaserBeamCornersRight.y + laserWorldPosition.y);
+
+                    Position newNearLaserBeamCornersStraight = widthVector.Rotate(vessel.facing);
+                    newNearLaserBeamCornersStraight = newNearLaserBeamCornersStraight.Rotate(laser.facing);
+                    Position newNearLaserBeamCornersLeft = newNearLaserBeamCornersStraight.Rotate(-(1 / 2) * (float)Math.PI);
+                    Position newNearLaserBeamCornersRight = newNearLaserBeamCornersStraight.Rotate((1 / 2) * (float)Math.PI);
+                    extremeXs.Add(newNearLaserBeamCornersLeft.x + laserWorldPosition.x);
+                    extremeXs.Add(newNearLaserBeamCornersRight.x + laserWorldPosition.x);
+                    extremeYs.Add(newNearLaserBeamCornersLeft.y + laserWorldPosition.y);
+                    extremeYs.Add(newNearLaserBeamCornersRight.y + laserWorldPosition.y);
+
                     Position lengthVector = new Position { x = 0, y = laser.Length() };
-                    
+                    Position lengthVectorStraight = lengthVector.Rotate(previousVesselFacing);
+                    lengthVectorStraight = lengthVectorStraight.Rotate(laser.facing);
+                    extremeXs.Add(previousNearLaserBeamCornersLeft.x + lengthVector.x + laserWorldPosition.x);
+                    extremeXs.Add(previousNearLaserBeamCornersRight.x + lengthVector.x + laserWorldPosition.x);
+                    extremeXs.Add(newNearLaserBeamCornersLeft.x + lengthVector.x + laserWorldPosition.x);
+                    extremeXs.Add(newNearLaserBeamCornersRight.x + lengthVector.x + laserWorldPosition.x);
+                    extremeXs.Add(previousNearLaserBeamCornersLeft.y + lengthVector.y + laserWorldPosition.y);
+                    extremeXs.Add(previousNearLaserBeamCornersRight.y + lengthVector.y + laserWorldPosition.y);
+                    extremeXs.Add(newNearLaserBeamCornersLeft.y + lengthVector.y + laserWorldPosition.y);
+                    extremeXs.Add(newNearLaserBeamCornersRight.y + lengthVector.y + laserWorldPosition.y);
+
+                    float bottom = Mathf.Min(extremeYs.ToArray());
+                    float top = Mathf.Max(extremeYs.ToArray());
+                    float left = Mathf.Min(extremeXs.ToArray());
+                    float right = Mathf.Max(extremeXs.ToArray());
+
                     vessel.PowerCore.StoredEnergy -= energyCost; // !
                 }
             }
