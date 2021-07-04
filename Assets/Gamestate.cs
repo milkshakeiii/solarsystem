@@ -359,9 +359,14 @@ static class GameplayFunctions
                                  Player commandingPlayer,
                                  ref PlayerProgress playerProgress)
     {
+        //save Laser positions
+        List<Position> previousLaserPositions = new List<Position>();
+        foreach (Laser laser in vessel.Lasers)
+        {
+            previousLaserPositions.Add(vessel.PixelPositionToWorldPosition(laser.RootPixelPosition));
+        }
+
         //rotation
-        List<Vector2> previousLaserPositions;
-        
         bool rightRotation = command.TargetRotation >= 0;
         float desiredRotationAmount = Math.Abs(command.TargetRotation);
         float energyUsed = Math.Min(vessel.PowerCore.StoredEnergy, Vessel.MaxPortionMaxEnergySpentTurningPerSecond());
@@ -474,8 +479,17 @@ static class GameplayFunctions
                 float energyCost = laser.EnergyCostPerSecond() * game.SecondsPerTick();
                 if (vessel.PowerCore.StoredEnergy > energyCost)
                 {
+                    Position preRotationCenter = previousLaserPositions[i];
+                    Position currentCenter = vessel.PixelPositionToWorldPosition(laser.RootPixelPosition);
+                    List<float> extremeXs = new List<float>();
+                    List<float> extremeYs = new List<float>();
+                    Position widthVector = new Position { x = 0, y = laser.Width() };
+                    Position nearCorner12Offset = widthVector.Rotate(vessel.facing);
+                    nearCorner12Offset = nearCorner12Offset.Rotate(laser.facing);
+                    Position nearCorner34Offset = nearCorner12Offset.Rotate((float)Math.PI);
                     
-
+                    Position lengthVector = new Position { x = 0, y = laser.Length() };
+                    
                     vessel.PowerCore.StoredEnergy -= energyCost; // !
                 }
             }
