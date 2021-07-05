@@ -502,37 +502,52 @@ static class GameplayFunctions
                     Position previousNearLaserBeamCornersStraight = widthVector.Rotate(previousVesselFacing);
                     previousNearLaserBeamCornersStraight = previousNearLaserBeamCornersStraight.Rotate(laser.facing);
                     Position previousNearLaserBeamCornersLeft = previousNearLaserBeamCornersStraight.Rotate(-(1/2)*(float)Math.PI);
-                    Position previousNearLaserBeamCornersRight = previousNearLaserBeamCornersStraight.Rotate((1/2)*(float)Math.PI);
-                    extremeXs.Add(previousNearLaserBeamCornersLeft.x + laserWorldPosition.x);
-                    extremeXs.Add(previousNearLaserBeamCornersRight.x + laserWorldPosition.x);
-                    extremeYs.Add(previousNearLaserBeamCornersLeft.y + laserWorldPosition.y);
-                    extremeYs.Add(previousNearLaserBeamCornersRight.y + laserWorldPosition.y);
 
                     Position newNearLaserBeamCornersStraight = widthVector.Rotate(vessel.facing);
                     newNearLaserBeamCornersStraight = newNearLaserBeamCornersStraight.Rotate(laser.facing);
-                    Position newNearLaserBeamCornersLeft = newNearLaserBeamCornersStraight.Rotate(-(1 / 2) * (float)Math.PI);
                     Position newNearLaserBeamCornersRight = newNearLaserBeamCornersStraight.Rotate((1 / 2) * (float)Math.PI);
-                    extremeXs.Add(newNearLaserBeamCornersLeft.x + laserWorldPosition.x);
-                    extremeXs.Add(newNearLaserBeamCornersRight.x + laserWorldPosition.x);
-                    extremeYs.Add(newNearLaserBeamCornersLeft.y + laserWorldPosition.y);
-                    extremeYs.Add(newNearLaserBeamCornersRight.y + laserWorldPosition.y);
 
                     Position lengthVector = new Position { x = 0, y = laser.Length() };
-                    Position lengthVectorStraight = lengthVector.Rotate(previousVesselFacing);
-                    lengthVectorStraight = lengthVectorStraight.Rotate(laser.facing);
-                    extremeXs.Add(previousNearLaserBeamCornersLeft.x + lengthVector.x + laserWorldPosition.x);
-                    extremeXs.Add(previousNearLaserBeamCornersRight.x + lengthVector.x + laserWorldPosition.x);
-                    extremeXs.Add(newNearLaserBeamCornersLeft.x + lengthVector.x + laserWorldPosition.x);
-                    extremeXs.Add(newNearLaserBeamCornersRight.x + lengthVector.x + laserWorldPosition.x);
-                    extremeXs.Add(previousNearLaserBeamCornersLeft.y + lengthVector.y + laserWorldPosition.y);
-                    extremeXs.Add(previousNearLaserBeamCornersRight.y + lengthVector.y + laserWorldPosition.y);
-                    extremeXs.Add(newNearLaserBeamCornersLeft.y + lengthVector.y + laserWorldPosition.y);
-                    extremeXs.Add(newNearLaserBeamCornersRight.y + lengthVector.y + laserWorldPosition.y);
+                    lengthVector = lengthVector.Rotate(previousVesselFacing);
+                    lengthVector = lengthVector.Rotate(laser.facing);
+                    Position firstOpposite = new Position{
+                        x = previousNearLaserBeamCornersLeft.x + lengthVector.x + laserWorldPosition.x,
+                        y = previousNearLaserBeamCornersLeft.y + lengthVector.y + laserWorldPosition.y
+                    };
+                    Position secondOpposite = new Position
+                    {
+                        x = newNearLaserBeamCornersRight.x + lengthVector.x + laserWorldPosition.x,
+                        y = newNearLaserBeamCornersRight.y + lengthVector.y + laserWorldPosition.y
+                    };
 
-                    float bottom = Mathf.Min(extremeYs.ToArray());
-                    float top = Mathf.Max(extremeYs.ToArray());
-                    float left = Mathf.Min(extremeXs.ToArray());
-                    float right = Mathf.Max(extremeXs.ToArray());
+                    extremeXs.Add(newNearLaserBeamCornersRight.x + lengthVector.x + laserWorldPosition.x);
+
+                    List<Vector2> extremes = new List<Vector2>();
+                    extremes.Add(new Vector2(left, bottom));
+                    extremes.Add(new Vector2(left, top));
+                    extremes.Add(new Vector2(right, top));
+                    extremes.Add(new Vector2(right, bottom));
+
+                    List<float> distancesToExtremes = new List<float>();
+                    foreach (Vector2 extreme in extremes)
+                    {
+                        distancesToExtremes.Add(Vector2.Distance(extreme, laserWorldPosition.ToVector2()));
+                    }
+                    float nearestDistance = Mathf.Min(distancesToExtremes.ToArray());
+                    int nearestDistanceIndex = distancesToExtremes.IndexOf(nearestDistance);
+                    distancesToExtremes[nearestDistanceIndex] = float.MaxValue;
+                    float secondNearestDistance = Mathf.Min(distancesToExtremes.ToArray());
+                    int secondNearestDistanceIndex = distancesToExtremes.IndexOf(secondNearestDistance);
+                    Vector2 nearestExtreme = extremes[nearestDistanceIndex];
+                    Vector2 secondNearestExtreme = extremes[secondNearestDistanceIndex];
+                    Vector2 nearerOpposite = extremes[(nearestDistanceIndex + 2) % 4];
+                    Vector2 secondNearerOpposite = extremes[(secondNearestDistanceIndex + 2) % 4];
+                    int numberOfSteps = Mathf.RoundToInt(laser.Width());
+                    float stepSize = Vector2.Distance(nearestExtreme, secondNearestExtreme)/numberOfSteps;
+                    Vector2 stepVector = (secondNearestExtreme - nearestExtreme).normalized * stepSize;
+                    
+                    
+
 
                     //boxcast into enemy pixels
                     for (int j = 0; j < game.Players.Count; j++)
@@ -544,9 +559,9 @@ static class GameplayFunctions
                             for (int k = 0; k < otherPlayerProgress.Vessels.Count; k++)
                             {
                                 Vessel otherVessel = otherPlayerProgress.Vessels[k];
-                                for (int m = 0; m < otherVessel.LightHullPositions; m++)
+                                for (int m = 0; m < otherVessel.LightHullPositions.Count; m++)
                                 {
-
+                                    //cast a bunch of rays
                                 }
                             }
                         }
