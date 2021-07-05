@@ -100,6 +100,16 @@ public struct Vessel
         return 1f / 6f;
     }
 
+    public static float SecondsOfDamageToDestroyLightHull()
+    {
+        return 1f;
+    }
+
+    public static float SecondsOfDamageToDestroyDarkHull()
+    {
+        return 3f;
+    }
+
     public float EnergyToRadiansTurningCoversion()
     {
         return Weight();
@@ -533,7 +543,11 @@ static class GameplayFunctions
                         {
                             for (int k = 0; k < otherPlayerProgress.Vessels.Count; k++)
                             {
+                                Vessel otherVessel = otherPlayerProgress.Vessels[k];
+                                for (int m = 0; m < otherVessel.LightHullPositions; m++)
+                                {
 
+                                }
                             }
                         }
                     }
