@@ -327,6 +327,15 @@ public struct Command
     public List<bool> ActivateLasers;
 }
 
+struct BeamHit
+{
+    public bool dark;
+    public int playerIndex;
+    public int vesselIndex;
+    public int pixelIndex;
+    public int beamIndex;
+}
+
 static class GameplayFunctions
 {
     public static Gamestate NextGamestate(Game game, Gamestate sourceGamestate, GameTick doTurn)
@@ -369,13 +378,86 @@ static class GameplayFunctions
                                  Player commandingPlayer,
                                  ref PlayerProgress playerProgress)
     {
-        //save Laser positions and facing for later
-        List<Position> previousLaserPositions = new List<Position>();
-        foreach (Laser laser in vessel.Lasers)
+
+        //lasers
+        for (int i = 0; i < command.ActivateLasers.Count; i++)
         {
-            previousLaserPositions.Add(vessel.PixelPositionToWorldPosition(laser.RootPixelPosition));
+            Laser laser = vessel.Lasers[i];
+            float energyCost = laser.EnergyCostPerSecond() * game.SecondsPerTick();
+            if (command.ActivateLasers[i] && vessel.PowerCore.StoredEnergy > energyCost)
+            {
+                //calculate beam boxes
+                Position widthVector = new Position { x = 0, y = laser.Width() };
+                Position laserWorldPosition = vessel.PixelPositionToWorldPosition(laser.RootPixelPosition);
+
+                Position laserBeamCornersStraight = widthVector.Rotate(vessel.facing);
+                laserBeamCornersStraight = laserBeamCornersStraight.Rotate(laser.facing);
+                Position laserBeamCornersLeft = laserBeamCornersStraight.Rotate((1 / 2) * (float)Math.PI);
+                Position laserBeamCornersRight = laserBeamCornersStraight.Rotate(-(1 / 2) * (float)Math.PI);
+                Position leftCornerWorldPosition = new Position {
+                    x = laserWorldPosition.x + laserBeamCornersLeft.x,
+                    y = laserWorldPosition.y + laserBeamCornersLeft.y
+                };
+                Position rightCornerWorldPosition = new Position {
+                    x = laserWorldPosition.x + laserBeamCornersRight.x,
+                    y = laserWorldPosition.y + laserBeamCornersRight.y
+                };
+
+                int numberOfSteps = Mathf.RoundToInt(laser.Width());
+                float stepSize = Vector2.Distance(laserBeamCornersLeft.ToVector2(), laserBeamCornersRight.ToVector2()) / numberOfSteps;
+                Vector2 stepVector = (laserBeamCornersRight.ToVector2() - laserBeamCornersLeft.ToVector2()).normalized * stepSize;
+                Vector2 orthoganalVector = new Position { x = stepVector.x, y = stepVector.y }.Rotate((float)Math.PI / 2).ToVector2();
+
+                List<Vector2> beamCornerPoints = new List<Vector2> { leftCornerWorldPosition.ToVector2() };
+                Vector2 lastBeamCornerPoint = beamCornerPoints[0];
+                for (int j = 0; j < numberOfSteps; j++) {
+                    lastBeamCornerPoint += stepVector;
+                    beamCornerPoints.Add(lastBeamCornerPoint);
+                }
+
+                //boxcast into enemy pixels
+                List<BeamHit> beamHits = new List<BeamHit>();
+                for (int j = 0; j < game.Players.Count; j++)
+                {
+                    Player otherPlayer = game.Players[j];
+                    PlayerProgress otherPlayerProgress = gamestate.PlayerProgresses[j];
+                    if (otherPlayer.TeamNumber != commandingPlayer.TeamNumber)
+                    {
+                        for (int k = 0; k < otherPlayerProgress.Vessels.Count; k++)
+                        {
+                            Vessel otherVessel = otherPlayerProgress.Vessels[k];
+                            beamHits.AddRange(FindHitPixels(ref otherVessel.LightHullPositions,
+                                                            ref otherVessel.LightHullSecondsOfDamage,
+                                                            beamCornerPoints,
+                                                            orthoganalVector));
+                            beamHits.AddRange(FindHitPixels(ref otherVessel.DarkHullPositions,
+                                                            ref otherVessel.DarkHullSecondsOfDamage,
+                                                            beamCornerPoints,
+                                                            orthoganalVector));
+                        }
+                    }
+                }
+                Dictionary<int, List<BeamHit>> hitsByBeam = new Dictionary<int, List<BeamHit>>();
+                foreach (BeamHit beamHit in beamHits)
+                {
+                    if (hitsByBeam.ContainsKey(beamHit.beamIndex))
+                    {
+                        hitsByBeam[beamHit.beamIndex].Add(beamHit)
+                    }
+                    else
+                    {
+                        hitsByBeam[beamHit.beamIndex] = new List<BeamHit>() { beamHit };
+                    }
+                }
+                List<BeamHit> damagingHits = new List<BeamHit>();
+                foreach (int key in hitsByBeam.Keys)
+                {
+                    //find nearest and append to damagingHits
+                }
+
+                vessel.PowerCore.StoredEnergy -= energyCost; // !
+            }
         }
-        float previousVesselFacing = vessel.facing;
 
         //rotation
         bool rightRotation = command.TargetRotation >= 0;
@@ -480,96 +562,10 @@ static class GameplayFunctions
                 }
             }
         }
+    }
 
-        //lasers
-        for (int i = 0; i < command.ActivateLasers.Count; i++)
-        {
-            Laser laser = vessel.Lasers[i];
-            if (command.ActivateLasers[i])
-            {
-                float energyCost = laser.EnergyCostPerSecond() * game.SecondsPerTick();
-                if (vessel.PowerCore.StoredEnergy > energyCost)
-                {
-                    //calculate beam box
-                    Position preRotationCenter = previousLaserPositions[i];
-                    
-                    Position currentCenter = vessel.PixelPositionToWorldPosition(laser.RootPixelPosition);
-                    List<float> extremeXs = new List<float>();
-                    List<float> extremeYs = new List<float>();
-                    Position widthVector = new Position { x = 0, y = laser.Width() };
-                    Position laserWorldPosition = vessel.PixelPositionToWorldPosition(laser.RootPixelPosition);
-
-                    Position previousNearLaserBeamCornersStraight = widthVector.Rotate(previousVesselFacing);
-                    previousNearLaserBeamCornersStraight = previousNearLaserBeamCornersStraight.Rotate(laser.facing);
-                    Position previousNearLaserBeamCornersLeft = previousNearLaserBeamCornersStraight.Rotate(-(1/2)*(float)Math.PI);
-
-                    Position newNearLaserBeamCornersStraight = widthVector.Rotate(vessel.facing);
-                    newNearLaserBeamCornersStraight = newNearLaserBeamCornersStraight.Rotate(laser.facing);
-                    Position newNearLaserBeamCornersRight = newNearLaserBeamCornersStraight.Rotate((1 / 2) * (float)Math.PI);
-
-                    Position lengthVector = new Position { x = 0, y = laser.Length() };
-                    lengthVector = lengthVector.Rotate(previousVesselFacing);
-                    lengthVector = lengthVector.Rotate(laser.facing);
-                    Position firstOpposite = new Position{
-                        x = previousNearLaserBeamCornersLeft.x + lengthVector.x + laserWorldPosition.x,
-                        y = previousNearLaserBeamCornersLeft.y + lengthVector.y + laserWorldPosition.y
-                    };
-                    Position secondOpposite = new Position
-                    {
-                        x = newNearLaserBeamCornersRight.x + lengthVector.x + laserWorldPosition.x,
-                        y = newNearLaserBeamCornersRight.y + lengthVector.y + laserWorldPosition.y
-                    };
-
-                    extremeXs.Add(newNearLaserBeamCornersRight.x + lengthVector.x + laserWorldPosition.x);
-
-                    List<Vector2> extremes = new List<Vector2>();
-                    extremes.Add(new Vector2(left, bottom));
-                    extremes.Add(new Vector2(left, top));
-                    extremes.Add(new Vector2(right, top));
-                    extremes.Add(new Vector2(right, bottom));
-
-                    List<float> distancesToExtremes = new List<float>();
-                    foreach (Vector2 extreme in extremes)
-                    {
-                        distancesToExtremes.Add(Vector2.Distance(extreme, laserWorldPosition.ToVector2()));
-                    }
-                    float nearestDistance = Mathf.Min(distancesToExtremes.ToArray());
-                    int nearestDistanceIndex = distancesToExtremes.IndexOf(nearestDistance);
-                    distancesToExtremes[nearestDistanceIndex] = float.MaxValue;
-                    float secondNearestDistance = Mathf.Min(distancesToExtremes.ToArray());
-                    int secondNearestDistanceIndex = distancesToExtremes.IndexOf(secondNearestDistance);
-                    Vector2 nearestExtreme = extremes[nearestDistanceIndex];
-                    Vector2 secondNearestExtreme = extremes[secondNearestDistanceIndex];
-                    Vector2 nearerOpposite = extremes[(nearestDistanceIndex + 2) % 4];
-                    Vector2 secondNearerOpposite = extremes[(secondNearestDistanceIndex + 2) % 4];
-                    int numberOfSteps = Mathf.RoundToInt(laser.Width());
-                    float stepSize = Vector2.Distance(nearestExtreme, secondNearestExtreme)/numberOfSteps;
-                    Vector2 stepVector = (secondNearestExtreme - nearestExtreme).normalized * stepSize;
-                    
-                    
-
-
-                    //boxcast into enemy pixels
-                    for (int j = 0; j < game.Players.Count; j++)
-                    {
-                        Player otherPlayer = game.Players[j];
-                        PlayerProgress otherPlayerProgress = gamestate.PlayerProgresses[j];
-                        if (otherPlayer.TeamNumber != commandingPlayer.TeamNumber)
-                        {
-                            for (int k = 0; k < otherPlayerProgress.Vessels.Count; k++)
-                            {
-                                Vessel otherVessel = otherPlayerProgress.Vessels[k];
-                                for (int m = 0; m < otherVessel.LightHullPositions.Count; m++)
-                                {
-                                    //cast a bunch of rays
-                                }
-                            }
-                        }
-                    }
-
-                    vessel.PowerCore.StoredEnergy -= energyCost; // !
-                }
-            }
-        }
+    private static List<BeamHit> FindHitPixels(ref List<PixelPosition> lightHullPositions, ref List<float> lightHullSecondsOfDamage, List<Vector2> beamCornerPoints, Vector2 orthoganalVector)
+    {
+        throw new NotImplementedException();
     }
 }
