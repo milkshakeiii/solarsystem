@@ -84,15 +84,13 @@ public struct Vessel
     public Position Position;
     public float facing;
 
-    public List<Engine> Engines;
+    public LightHull LightHull;
+    public DarkHull DarkHull;
     public PowerCore PowerCore;
+    public List<Engine> Engines;
     public List<Laser> Lasers;
     public List<Collector> Collectors;
     public List<Shipyard> Shipyards;
-    public List<PixelPosition> LightHullPositions;
-    public List<float> LightHullSecondsOfDamage;
-    public List<PixelPosition> DarkHullPositions;
-    public List<float> DarkHullSecondsOfDamage;
 
 
     public static float MaxPortionMaxEnergySpentTurningPerSecond()
@@ -115,9 +113,9 @@ public struct Vessel
         return Weight();
     }
 
-    public List<Component> Components()
+    public List<FunctionalComponent> FunctionalComponents()
     {
-        List<Component> components = new List<Component>();
+        List<FunctionalComponent> components = new List<FunctionalComponent>();
         components.AddRange(Engines);
         components.AddRange(Lasers);
         components.AddRange(Collectors);
@@ -125,15 +123,24 @@ public struct Vessel
         components.Add(PowerCore);
         return components;
     }
+
+    public List<PixelComponent> PixelComponents()
+    {
+        List<PixelComponent> components = new List<PixelComponent>();
+        components.AddRange(FunctionalComponents());
+        components.Add(LightHull);
+        components.Add(DarkHull);
+        return components;
+    }
     
     public float Weight()
     {
         float componentsWeight = 0;
-        foreach (Component component in Components())
+        foreach (FunctionalComponent component in FunctionalComponents())
         {
             componentsWeight += component.Size * component.Size;
         }
-        return LightHullPositions.Count + DarkHullPositions.Count * 2 + componentsWeight;
+        return LightHull.PixelPositions.Count + DarkHull.PixelPositions.Count * 2 + componentsWeight;
     }
 
     public float UnitsPerSecondInDirection(Position direction)
@@ -201,17 +208,34 @@ public struct Asteroid
 }
 
 [Serializable]
-public class Component
+public class PixelComponent
 {
     public PixelPosition RootPixelPosition; //relative to parent vessel
     public List<PixelPosition> PixelPositions; //relative to root pixel position
     public List<float> SecondsOfDamage;
+}
+
+[Serializable]
+public class LightHull : PixelComponent
+{
+
+}
+
+[Serializable]
+public class DarkHull : PixelComponent
+{
+
+}
+
+[Serializable]
+public class FunctionalComponent : PixelComponent
+{
     public float facing; //up is 0 or 2pi
     public float Size;
     public float Quality;
 }
 
-public class PowerCore : Component
+public class PowerCore : FunctionalComponent
 {
     public float StoredEnergy;
 
@@ -226,7 +250,7 @@ public class PowerCore : Component
     }
 }
 
-public class Engine : Component
+public class Engine : FunctionalComponent
 {
     public float ThrustPerSecond()
     {
@@ -239,7 +263,7 @@ public class Engine : Component
     }
 }
 
-public class Laser : Component
+public class Laser : FunctionalComponent
 {
     public float EnergyCostPerSecond()
     {
@@ -257,7 +281,7 @@ public class Laser : Component
     }
 }
 
-public class Collector : Component
+public class Collector : FunctionalComponent
 {
     public float CollectionRadius()
     {
@@ -285,7 +309,7 @@ public class Collector : Component
     }
 }
 
-public class Shipyard : Component
+public class Shipyard : FunctionalComponent
 {
     public float SecondOfVesselBuilt;
     public bool BuildInProgress;
@@ -329,9 +353,9 @@ public struct Command
 
 struct BeamHit
 {
-    public bool dark;
     public int playerIndex;
     public int vesselIndex;
+    public int pixelComponentIndex;
     public int pixelIndex;
     public int beamIndex;
 }
@@ -349,7 +373,7 @@ static class GameplayFunctions
         for (int i = 0; i < doTurn.PlayerActions.Count; i++)
         {
             int playerIndex = i;
-            if (game.Gamestates.Count%2 == 1)
+            if (game.Gamestates.Count % 2 == 1)
             {
                 playerIndex = doTurn.PlayerActions.Count - i - 1; //invert player order every other turn
             }
@@ -416,7 +440,7 @@ static class GameplayFunctions
                 }
 
                 //boxcast into enemy pixels
-                List<BeamHit> beamHits = new List<BeamHit>();
+                List<BeamHit> withinBeamBox = new List<BeamHit>();
                 for (int j = 0; j < game.Players.Count; j++)
                 {
                     Player otherPlayer = game.Players[j];
@@ -426,31 +450,52 @@ static class GameplayFunctions
                         for (int k = 0; k < otherPlayerProgress.Vessels.Count; k++)
                         {
                             Vessel otherVessel = otherPlayerProgress.Vessels[k];
-                            beamHits.AddRange(FindHitPixels(ref otherVessel.LightHullPositions,
-                                                            ref otherVessel.LightHullSecondsOfDamage,
-                                                            beamCornerPoints,
-                                                            orthoganalVector));
-                            beamHits.AddRange(FindHitPixels(ref otherVessel.DarkHullPositions,
-                                                            ref otherVessel.DarkHullSecondsOfDamage,
-                                                            beamCornerPoints,
-                                                            orthoganalVector));
+                            List<PixelComponent> otherVesselPixelComponents = otherVessel.PixelComponents();
+                            for (int m = 0; m < otherVesselPixelComponents.Count; m++)
+                            {
+                                PixelComponent pixelComponent = otherVesselPixelComponents[m];
+                                for (int n = 0; n < pixelComponent.PixelPositions.Count; n++)
+                                {
+                                    Position enemyPixelPosition = otherVessel.PixelPositionToWorldPosition(pixelComponent.PixelPositions[n]);
+                                    Vector2 enemyPixelVector = enemyPixelPosition.ToVector2();
+                                    //orthogonalVector, stepVector, ijkmn, box
+                                    for (int a = 0; a < beamCornerPoints.Count - 1; a++)
+                                    {
+                                        bool rightHemiplane = Vector2.Dot(stepVector, enemyPixelVector - beamCornerPoints[a]) > 0;
+                                        bool nextRightHemiplane = Vector2.Dot(stepVector, enemyPixelVector - beamCornerPoints[a+1]) > 0;
+                                        bool frontHemiplane = Vector2.Dot(orthoganalVector, enemyPixelVector - beamCornerPoints[a]) > 0;
+                                        bool hit = rightHemiplane && (!nextRightHemiplane) && frontHemiplane;
+                                        if (hit)
+                                        {
+                                            withinBeamBox.Add(new BeamHit
+                                            {
+                                                playerIndex = j,
+                                                vesselIndex = k,
+                                                pixelComponentIndex = m,
+                                                pixelIndex = n,
+                                                beamIndex = a
+                                            });
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
-                Dictionary<int, List<BeamHit>> hitsByBeam = new Dictionary<int, List<BeamHit>>();
-                foreach (BeamHit beamHit in beamHits)
+                Dictionary<int, List<BeamHit>> beamIndexToBeamHit = new Dictionary<int, List<BeamHit>>();
+                foreach (BeamHit beamHit in withinBeamBox)
                 {
-                    if (hitsByBeam.ContainsKey(beamHit.beamIndex))
+                    if (beamIndexToBeamHit.ContainsKey(beamHit.beamIndex))
                     {
-                        hitsByBeam[beamHit.beamIndex].Add(beamHit)
+                        beamIndexToBeamHit[beamHit.beamIndex].Add(beamHit)
                     }
                     else
                     {
-                        hitsByBeam[beamHit.beamIndex] = new List<BeamHit>() { beamHit };
+                        beamIndexToBeamHit[beamHit.beamIndex] = new List<BeamHit>() { beamHit };
                     }
                 }
                 List<BeamHit> damagingHits = new List<BeamHit>();
-                foreach (int key in hitsByBeam.Keys)
+                foreach (int key in beamIndexToBeamHit.Keys)
                 {
                     //find nearest and append to damagingHits
                 }
@@ -562,10 +607,5 @@ static class GameplayFunctions
                 }
             }
         }
-    }
-
-    private static List<BeamHit> FindHitPixels(ref List<PixelPosition> lightHullPositions, ref List<float> lightHullSecondsOfDamage, List<Vector2> beamCornerPoints, Vector2 orthoganalVector)
-    {
-        throw new NotImplementedException();
     }
 }
