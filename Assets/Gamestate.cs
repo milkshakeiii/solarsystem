@@ -37,6 +37,16 @@ public struct Gamestate
 {
     public List<PlayerProgress> PlayerProgresses;
     public List<Asteroid> Asteroids;
+
+    public List<Vessel> Vessels()
+    {
+        List<Vessel> vessels = new List<Vessel>();
+        foreach (PlayerProgress playerProgress in PlayerProgresses)
+        {
+            vessels.AddRange(playerProgress.Vessels);
+        }
+        return vessels;
+    }
 }
 
 [Serializable]
@@ -515,8 +525,20 @@ static class GameplayFunctions
                     damagingHits.Add(nearestBeamHit);
                 }
 
+                foreach (BeamHit thisHit in damagingHits)
+                {
+                    Vessel enemyVessel = gamestate.PlayerProgresses[thisHit.playerIndex].Vessels[thisHit.vesselIndex];
+                    enemyVessel.PixelComponents()[thisHit.pixelComponentIndex].SecondsOfDamage[thisHit.pixelIndex] += game.SecondsPerTick();
+                }
+
                 vessel.PowerCore.StoredEnergy -= energyCost; // !
             }
+        }
+
+        //pixel destruction
+        foreach (Vessel vessel in gamestate.Vessels())
+        {
+            
         }
 
         //rotation
