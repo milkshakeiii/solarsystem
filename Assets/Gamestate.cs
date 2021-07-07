@@ -458,7 +458,6 @@ static class GameplayFunctions
                                 {
                                     Position enemyPixelPosition = otherVessel.PixelPositionToWorldPosition(pixelComponent.PixelPositions[n]);
                                     Vector2 enemyPixelVector = enemyPixelPosition.ToVector2();
-                                    //orthogonalVector, stepVector, ijkmn, box
                                     for (int a = 0; a < beamCornerPoints.Count - 1; a++)
                                     {
                                         bool rightHemiplane = Vector2.Dot(stepVector, enemyPixelVector - beamCornerPoints[a]) > 0;
@@ -497,7 +496,23 @@ static class GameplayFunctions
                 List<BeamHit> damagingHits = new List<BeamHit>();
                 foreach (int key in beamIndexToBeamHit.Keys)
                 {
-                    //find nearest and append to damagingHits
+                    List<BeamHit> beamHitsForThisBeam = beamIndexToBeamHit[key];
+                    BeamHit nearestBeamHit = beamHitsForThisBeam[0];
+                    float nearestSquareDistance = float.MaxValue;
+                    for (int j = 0; j < beamHitsForThisBeam.Count; j++)
+                    {
+                        BeamHit thisHit = beamHitsForThisBeam[j];
+                        Vessel enemyVessel = gamestate.PlayerProgresses[thisHit.playerIndex].Vessels[thisHit.vesselIndex];
+                        PixelPosition hitPixelPosition = enemyVessel.PixelComponents()[thisHit.pixelComponentIndex].PixelPositions[thisHit.pixelIndex];
+                        Vector2 hitWorldPosition = enemyVessel.PixelPositionToWorldPosition(hitPixelPosition).ToVector2();
+                        float squareDistance = Vector2.SqrMagnitude(hitWorldPosition - laserWorldPosition.ToVector2());
+                        if (squareDistance < nearestSquareDistance)
+                        {
+                            nearestBeamHit = thisHit;
+                            nearestSquareDistance = squareDistance;
+                        }
+                    }
+                    damagingHits.Add(nearestBeamHit);
                 }
 
                 vessel.PowerCore.StoredEnergy -= energyCost; // !
