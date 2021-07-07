@@ -496,7 +496,7 @@ static class GameplayFunctions
                 {
                     if (beamIndexToBeamHit.ContainsKey(beamHit.beamIndex))
                     {
-                        beamIndexToBeamHit[beamHit.beamIndex].Add(beamHit)
+                        beamIndexToBeamHit[beamHit.beamIndex].Add(beamHit);
                     }
                     else
                     {
@@ -536,7 +536,7 @@ static class GameplayFunctions
         }
 
         //pixel destruction
-        foreach (Vessel vessel in gamestate.Vessels())
+        foreach (Vessel damagedVessel in gamestate.Vessels())
         {
             
         }
