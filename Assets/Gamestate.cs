@@ -108,16 +108,6 @@ public struct Vessel
         return 1f / 6f;
     }
 
-    public static float SecondsOfDamageToDestroyLightHull()
-    {
-        return 1f;
-    }
-
-    public static float SecondsOfDamageToDestroyDarkHull()
-    {
-        return 3f;
-    }
-
     public float EnergyToRadiansTurningCoversion()
     {
         return Weight();
@@ -208,6 +198,10 @@ public struct PixelPosition
     {
         return new Vector2(x, y);
     }
+    public static PixelPosition NotAPosition()
+    {
+        return new PixelPosition { x = float.NaN, y = float.NaN };
+    }
 }
 
 [Serializable]
@@ -223,18 +217,26 @@ public class PixelComponent
     public PixelPosition RootPixelPosition; //relative to parent vessel
     public List<PixelPosition> PixelPositions; //relative to root pixel position
     public List<float> SecondsOfDamage;
+
+    public virtual float SecondsToDestroy()
+    {
+        return 1f;
+    }
 }
 
 [Serializable]
 public class LightHull : PixelComponent
 {
-
+    
 }
 
 [Serializable]
 public class DarkHull : PixelComponent
 {
-
+    public override float SecondsToDestroy()
+    {
+        return 3f;
+    }
 }
 
 [Serializable]
@@ -535,10 +537,21 @@ static class GameplayFunctions
             }
         }
 
-        //pixel destruction
+        //delete destroyed pixels
         foreach (Vessel damagedVessel in gamestate.Vessels())
         {
-            
+            List<int> deletedIndices = new List<int>();
+            foreach (PixelComponent pixelComponent in damagedVessel.PixelComponents())
+            {
+                for (int i = pixelComponent.PixelPositions.Count - 1; i >= 0 ; i--)
+                {
+                    if (pixelComponent.SecondsOfDamage[i] < pixelComponent.SecondsToDestroy())
+                    {
+                        pixelComponent.SecondsOfDamage.RemoveAt(i);
+                        pixelComponent.PixelPositions.RemoveAt(i);
+                    }
+                }
+            }
         }
 
         //rotation
