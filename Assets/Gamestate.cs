@@ -198,10 +198,6 @@ public struct PixelPosition
     {
         return new Vector2(x, y);
     }
-    public static PixelPosition NotAPosition()
-    {
-        return new PixelPosition { x = float.NaN, y = float.NaN };
-    }
 }
 
 [Serializable]
