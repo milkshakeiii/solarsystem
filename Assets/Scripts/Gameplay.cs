@@ -20,6 +20,15 @@ public struct Game
     {
         return SecondsPerTurn / StatesPerTurn;
     }
+
+    public Gamestate BuildFirstGamestate()
+    {
+        Gamestate firstGamestate = new Gamestate();
+        foreach (Player player in Players)
+        {
+            PlayerProgress thisPlayerProgress = new PlayerProgress();
+        }
+    }
 }
 
 [Serializable]

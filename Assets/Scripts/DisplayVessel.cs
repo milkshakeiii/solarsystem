@@ -15,4 +15,9 @@ public class DisplayVessel : MonoBehaviour
     {
         
     }
+
+    public void Initialize(Vessel gameVessel)
+    {
+        transform.position = gameVessel.Position.ToVector2();
+    }
 }
