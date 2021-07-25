@@ -9,13 +9,10 @@ public class GamestateDisplayer : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        Gamestate testGamestate = new Gamestate();
-        testGamestate.PlayerProgresses = new List<PlayerProgress>();
-        PlayerProgress testPlayerProgress = new PlayerProgress();
-        testPlayerProgress.Vessels = new List<Vessel>();
-        Vessel newVessel = new Vessel();
-        testPlayerProgress.Vessels.Add(newVessel);
-        testGamestate.PlayerProgresses.Add(testPlayerProgress);
+        Game testGame = new Game();
+        Player testPlayer = new Player();
+        testGame.Players = new List<Player>() { testPlayer };
+        Gamestate testGamestate = testGame.BuildFirstGamestate();
         Display(testGamestate);
     }
 

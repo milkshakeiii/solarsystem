@@ -24,10 +24,28 @@ public struct Game
     public Gamestate BuildFirstGamestate()
     {
         Gamestate firstGamestate = new Gamestate();
+        if (Players == null) throw new UnityException("BuildFirstGamestate found null players list");
+        if (Players.Count == 0) throw new UnityException("BuildFirstGamestate found 0 players");
+
         foreach (Player player in Players)
         {
             PlayerProgress thisPlayerProgress = new PlayerProgress();
+            thisPlayerProgress.Research = 0;
+            thisPlayerProgress.StoredResources = 100;
+            thisPlayerProgress.Vessels = new List<Vessel>();
+            if (player.Deck == null)
+            {
+                throw new UnityException("A player has a null deck");
+            }
+            if (player.Deck.Count == 0)
+            {
+                throw new UnityException("A player does not have a mothership.");
+            }
+            thisPlayerProgress.Vessels.Add(player.Deck[0]);
+            firstGamestate.PlayerProgresses.Add(thisPlayerProgress);
         }
+        firstGamestate.Asteroids = new List<Asteroid>();
+        return firstGamestate;
     }
 }
 
@@ -36,7 +54,7 @@ public struct Player
 {
     public string Name;
     public float ELO;
-    public List<Vessel> Deck;
+    public List<Vessel> Deck; //the first element is the player's mothership
     public List<float> ResearchThresholds;
     public int TeamNumber;
 }
