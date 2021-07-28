@@ -369,6 +369,7 @@ public class FunctionalComponent : PixelComponent
     }
 }
 
+[Serializable]
 public class PowerCore : FunctionalComponent
 {
     public float StoredEnergy;
@@ -394,6 +395,7 @@ public class PowerCore : FunctionalComponent
     }
 }
 
+[Serializable]
 public class Engine : FunctionalComponent
 {
     public Engine(PixelPosition rootPixelPosition,
@@ -416,6 +418,7 @@ public class Engine : FunctionalComponent
     }
 }
 
+[Serializable]
 public class Laser : FunctionalComponent
 {
     public Laser(PixelPosition rootPixelPosition,
@@ -443,6 +446,7 @@ public class Laser : FunctionalComponent
     }
 }
 
+[Serializable]
 public class Collector : FunctionalComponent
 {
     public Collector(PixelPosition rootPixelPosition,
@@ -480,6 +484,7 @@ public class Collector : FunctionalComponent
     }
 }
 
+[Serializable]
 public class Shipyard : FunctionalComponent
 {
     public float SecondsOfVesselBuilt;
