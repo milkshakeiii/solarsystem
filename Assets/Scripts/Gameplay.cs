@@ -16,6 +16,27 @@ public struct Game
     public float TimeControl; //seconds
     public float TimeIncrement; //seconds
 
+    public Game(int statesPerTurn,
+                int secondsPerTurn,
+                List<Gamestate> gamestates,
+                float height, 
+                float width,
+                List<Player> players,
+                float startTime,
+                float timeControl,
+                float timeIncrement)
+    {
+        StatesPerTurn = statesPerTurn;
+        SecondsPerTurn = secondsPerTurn;
+        Gamestates = gamestates;
+        Height = height;
+        Width = width;
+        Players = players;
+        StartTime = startTime;
+        TimeControl = timeControl;
+        TimeIncrement = timeIncrement;
+    }
+
     public float SecondsPerTick()
     {
         return SecondsPerTurn / StatesPerTurn;
@@ -24,6 +45,7 @@ public struct Game
     public Gamestate BuildFirstGamestate()
     {
         Gamestate firstGamestate = new Gamestate();
+        firstGamestate.PlayerProgresses = new List<PlayerProgress>();
         if (Players == null) throw new UnityException("BuildFirstGamestate found null players list");
         if (Players.Count == 0) throw new UnityException("BuildFirstGamestate found 0 players");
 
@@ -57,6 +79,15 @@ public struct Player
     public List<Vessel> Deck; //the first element is the player's mothership
     public List<float> ResearchThresholds;
     public int TeamNumber;
+
+    public Player(string name, float eLO, List<Vessel> deck, List<float> researchThresholds, int teamNumber)
+    {
+        Name = name;
+        ELO = eLO;
+        Deck = deck;
+        ResearchThresholds = researchThresholds;
+        TeamNumber = teamNumber;
+    }
 }
 
 [Serializable]
@@ -87,21 +118,27 @@ public struct PlayerProgress
 [Serializable]
 public struct Position
 {
-    public float x;
-    public float y;
+    public float X;
+    public float Y;
+
+    public Position(float x, float y)
+    {
+        X = x;
+        Y = y;
+    }
 
     public static Position Up()
     {
         return new Position
         {
-            x = 0,
-            y = 1
+            X = 0,
+            Y = 1
         };
     }
 
     public Vector2 ToVector2()
     {
-        return new Vector2(x, y);
+        return new Vector2(X, Y);
     }
 
     public Position Rotate(float radians)
@@ -109,8 +146,8 @@ public struct Position
         float sin = Mathf.Sin(radians);
         float cos = Mathf.Cos(radians);
         return new Position {
-            x = cos * x - sin * y,
-            y = sin * x + cos * y
+            X = cos * X - sin * Y,
+            Y = sin * X + cos * Y
         };
     }
 }
@@ -119,7 +156,7 @@ public struct Position
 public struct Vessel
 {
     public Position Position;
-    public float facing;
+    public float Facing;
 
     public LightHull LightHull;
     public DarkHull DarkHull;
@@ -128,6 +165,27 @@ public struct Vessel
     public List<Laser> Lasers;
     public List<Collector> Collectors;
     public List<Shipyard> Shipyards;
+
+    public Vessel(Position position,
+                  float facing,
+                  LightHull lightHull,
+                  DarkHull darkHull,
+                  PowerCore powerCore,
+                  List<Engine> engines,
+                  List<Laser> lasers,
+                  List<Collector> collectors,
+                  List<Shipyard> shipyards)
+    {
+        Position = position;
+        Facing = facing;
+        LightHull = lightHull;
+        DarkHull = darkHull;
+        PowerCore = powerCore;
+        Engines = engines;
+        Lasers = lasers;
+        Collectors = collectors;
+        Shipyards = shipyards;
+    }
 
 
     public static float MaxPortionMaxEnergySpentTurningPerSecond()
@@ -176,7 +234,7 @@ public struct Vessel
         float result = 0;
         foreach (Engine engine in Engines)
         {
-            float facingDifference = directionFacing % (2 * (float)Math.PI) - facing % (2 * (float)Math.PI);
+            float facingDifference = directionFacing % (2 * (float)Math.PI) - Facing % (2 * (float)Math.PI);
             float facingDifferenceClamped = Mathf.Clamp(facingDifference, -(float)Math.PI, (float)Math.PI);
             float facingDifferenceRatio = Math.Abs(facingDifferenceClamped / (float)Math.PI);
             result += (1 - facingDifferenceRatio) * engine.ThrustPerSecond() * (1 / Weight());
@@ -190,7 +248,7 @@ public struct Vessel
         float result = 0;
         foreach (Engine engine in Engines)
         {
-            float facingDifference = directionFacing % (2 * (float)Math.PI) - facing % (2 * (float)Math.PI);
+            float facingDifference = directionFacing % (2 * (float)Math.PI) - Facing % (2 * (float)Math.PI);
             if (facingDifference < (float)Math.PI / 2)
                 result += engine.EnergyCostPerSecond();
         }
@@ -209,21 +267,27 @@ public struct Vessel
 
     public Position PixelPositionToWorldPosition(PixelPosition pixelPosition)
     {
-        Position floatPosition = new Position { x = pixelPosition.x, y = pixelPosition.y };
-        Position rotatedFloatPosition = floatPosition.Rotate(facing);
-        return new Position { x = Position.x + rotatedFloatPosition.x, y = Position.y + rotatedFloatPosition.y };
+        Position floatPosition = new Position { X = pixelPosition.X, Y = pixelPosition.Y };
+        Position rotatedFloatPosition = floatPosition.Rotate(Facing);
+        return new Position { X = Position.X + rotatedFloatPosition.X, Y = Position.Y + rotatedFloatPosition.Y };
     }
 }
 
 [Serializable]
 public struct PixelPosition
 {
-    public int x;
-    public int y;
+    public int X;
+    public int Y;
+
+    public PixelPosition(int x, int y)
+    {
+        X = x;
+        Y = y;
+    }
 
     public Vector2 ToVector2()
     {
-        return new Vector2(x, y);
+        return new Vector2(X, Y);
     }
 }
 
@@ -232,6 +296,12 @@ public struct Asteroid
 {
     public Position Position;
     public float Size;
+
+    public Asteroid(Position position, float size)
+    {
+        Position = position;
+        Size = size;
+    }
 }
 
 [Serializable]
@@ -240,6 +310,13 @@ public class PixelComponent
     public PixelPosition RootPixelPosition; //relative to parent vessel
     public List<PixelPosition> PixelPositions; //relative to root pixel position
     public List<float> SecondsOfDamage;
+
+    public PixelComponent(PixelPosition rootPixelPosition, List<PixelPosition> pixelPositions, List<float> secondsOfDamage)
+    {
+        RootPixelPosition = rootPixelPosition;
+        PixelPositions = pixelPositions;
+        SecondsOfDamage = secondsOfDamage;
+    }
 
     public virtual float SecondsToDestroy()
     {
@@ -250,12 +327,22 @@ public class PixelComponent
 [Serializable]
 public class LightHull : PixelComponent
 {
-    
+    public LightHull(PixelPosition rootPixelPosition, 
+                     List<PixelPosition> pixelPositions,
+                     List<float> secondsOfDamage) : base(rootPixelPosition, pixelPositions, secondsOfDamage)
+    {
+    }
 }
 
 [Serializable]
 public class DarkHull : PixelComponent
 {
+    public DarkHull(PixelPosition rootPixelPosition,
+                    List<PixelPosition> pixelPositions,
+                    List<float> secondsOfDamage) : base(rootPixelPosition, pixelPositions, secondsOfDamage)
+    {
+    }
+
     public override float SecondsToDestroy()
     {
         return 3f;
@@ -265,14 +352,36 @@ public class DarkHull : PixelComponent
 [Serializable]
 public class FunctionalComponent : PixelComponent
 {
-    public float facing; //up is 0 or 2pi
+    public float Facing; //up is 0 or 2pi
     public float Size;
     public float Quality;
+
+    public FunctionalComponent(PixelPosition rootPixelPosition,
+                               List<PixelPosition> pixelPositions,
+                               List<float> secondsOfDamage,
+                               float facing,
+                               float size,
+                               float quality) : base(rootPixelPosition, pixelPositions, secondsOfDamage)
+    {
+        Facing = facing;
+        Size = size;
+        Quality = quality;
+    }
 }
 
 public class PowerCore : FunctionalComponent
 {
     public float StoredEnergy;
+
+    public PowerCore(PixelPosition rootPixelPosition,
+                     List<PixelPosition> pixelPositions,
+                     List<float> secondsOfDamage,
+                     float facing,
+                     float size,
+                     float quality) : base(rootPixelPosition, pixelPositions, secondsOfDamage, facing, size, quality)
+    {
+        StoredEnergy = MaxEnergy();
+    }
 
     public float MaxEnergy()
     {
@@ -287,6 +396,15 @@ public class PowerCore : FunctionalComponent
 
 public class Engine : FunctionalComponent
 {
+    public Engine(PixelPosition rootPixelPosition,
+                  List<PixelPosition> pixelPositions,
+                  List<float> secondsOfDamage,
+                  float facing,
+                  float size,
+                  float quality) : base(rootPixelPosition, pixelPositions, secondsOfDamage, facing, size, quality)
+    {
+    }
+
     public float ThrustPerSecond()
     {
         return Size * 5;
@@ -300,6 +418,15 @@ public class Engine : FunctionalComponent
 
 public class Laser : FunctionalComponent
 {
+    public Laser(PixelPosition rootPixelPosition,
+                 List<PixelPosition> pixelPositions,
+                 List<float> secondsOfDamage,
+                 float facing,
+                 float size,
+                 float quality) : base(rootPixelPosition, pixelPositions, secondsOfDamage, facing, size, quality)
+    {
+    }
+
     public float EnergyCostPerSecond()
     {
         return Size;
@@ -318,6 +445,15 @@ public class Laser : FunctionalComponent
 
 public class Collector : FunctionalComponent
 {
+    public Collector(PixelPosition rootPixelPosition,
+                     List<PixelPosition> pixelPositions,
+                     List<float> secondsOfDamage,
+                     float facing,
+                     float size,
+                     float quality) : base(rootPixelPosition, pixelPositions, secondsOfDamage, facing, size, quality)
+    {
+    }
+
     public float CollectionRadius()
     {
         return Size/2;
@@ -346,8 +482,19 @@ public class Collector : FunctionalComponent
 
 public class Shipyard : FunctionalComponent
 {
-    public float SecondOfVesselBuilt;
+    public float SecondsOfVesselBuilt;
     public bool BuildInProgress;
+
+    public Shipyard(PixelPosition rootPixelPosition,
+                    List<PixelPosition> pixelPositions,
+                    List<float> secondsOfDamage,
+                    float facing,
+                    float size,
+                    float quality) : base(rootPixelPosition, pixelPositions, secondsOfDamage, facing, size, quality)
+    {
+        SecondsOfVesselBuilt = 0f;
+        BuildInProgress = false;
+    }
 
     public float EnergyCostPerSecond()
     {
@@ -363,12 +510,22 @@ public class Shipyard : FunctionalComponent
 public struct GameTick
 {
     public List<PlayerAction> PlayerActions;
+
+    public GameTick(List<PlayerAction> playerActions)
+    {
+        PlayerActions = playerActions;
+    }
 }
 
 [Serializable]
 public struct PlayerAction
 {
     public List<Command> VesselCommands;
+
+    public PlayerAction(List<Command> vesselCommands)
+    {
+        VesselCommands = vesselCommands;
+    }
 }
 
 [Serializable]
@@ -384,6 +541,25 @@ public struct Command
 
     public List<bool> ActivateCollectors;
     public List<bool> ActivateLasers;
+
+    public Command(float targetRotation,
+                   Position targetDisplacement,
+                   List<bool> runShipyards,
+                   List<bool> beginShipyardRuns,
+                   List<bool> cancelShipyardRuns,
+                   List<Vessel> vesselsToBuild,
+                   List<bool> activateCollectors,
+                   List<bool> activateLasers)
+    {
+        TargetRotation = targetRotation;
+        TargetDisplacement = targetDisplacement;
+        RunShipyards = runShipyards;
+        BeginShipyardRuns = beginShipyardRuns;
+        CancelShipyardRuns = cancelShipyardRuns;
+        VesselsToBuild = vesselsToBuild;
+        ActivateCollectors = activateCollectors;
+        ActivateLasers = activateLasers;
+    }
 }
 
 struct BeamHit
@@ -430,7 +606,7 @@ static class GameplayFunctions
         return nextGamestate;
     }
 
-    public static void DoCommand(Command command,
+    private static void DoCommand(Command command,
                                  ref Vessel vessel,
                                  Game game,
                                  ref Gamestate gamestate,
@@ -446,26 +622,26 @@ static class GameplayFunctions
             if (command.ActivateLasers[i] && vessel.PowerCore.StoredEnergy > energyCost)
             {
                 //calculate beam boxes
-                Position widthVector = new Position { x = 0, y = laser.Width() };
+                Position widthVector = new Position { X = 0, Y = laser.Width() };
                 Position laserWorldPosition = vessel.PixelPositionToWorldPosition(laser.RootPixelPosition);
 
-                Position laserBeamCornersStraight = widthVector.Rotate(vessel.facing);
-                laserBeamCornersStraight = laserBeamCornersStraight.Rotate(laser.facing);
+                Position laserBeamCornersStraight = widthVector.Rotate(vessel.Facing);
+                laserBeamCornersStraight = laserBeamCornersStraight.Rotate(laser.Facing);
                 Position laserBeamCornersLeft = laserBeamCornersStraight.Rotate((1 / 2) * (float)Math.PI);
                 Position laserBeamCornersRight = laserBeamCornersStraight.Rotate(-(1 / 2) * (float)Math.PI);
                 Position leftCornerWorldPosition = new Position {
-                    x = laserWorldPosition.x + laserBeamCornersLeft.x,
-                    y = laserWorldPosition.y + laserBeamCornersLeft.y
+                    X = laserWorldPosition.X + laserBeamCornersLeft.X,
+                    Y = laserWorldPosition.Y + laserBeamCornersLeft.Y
                 };
                 Position rightCornerWorldPosition = new Position {
-                    x = laserWorldPosition.x + laserBeamCornersRight.x,
-                    y = laserWorldPosition.y + laserBeamCornersRight.y
+                    X = laserWorldPosition.X + laserBeamCornersRight.X,
+                    Y = laserWorldPosition.Y + laserBeamCornersRight.Y
                 };
 
                 int numberOfSteps = Mathf.RoundToInt(laser.Width());
                 float stepSize = Vector2.Distance(laserBeamCornersLeft.ToVector2(), laserBeamCornersRight.ToVector2()) / numberOfSteps;
                 Vector2 stepVector = (laserBeamCornersRight.ToVector2() - laserBeamCornersLeft.ToVector2()).normalized * stepSize;
-                Vector2 orthoganalVector = new Position { x = stepVector.x, y = stepVector.y }.Rotate((float)Math.PI / 2).ToVector2();
+                Vector2 orthoganalVector = new Position { X = stepVector.x, Y = stepVector.y }.Rotate((float)Math.PI / 2).ToVector2();
 
                 List<Vector2> beamCornerPoints = new List<Vector2> { leftCornerWorldPosition.ToVector2() };
                 Vector2 lastBeamCornerPoint = beamCornerPoints[0];
@@ -585,9 +761,9 @@ static class GameplayFunctions
         float actualRotationAmount = Math.Min(desiredRotationAmount, possibleRotationAmount);
         vessel.PowerCore.StoredEnergy -= energyUsed; // !
         if (rightRotation)
-            vessel.facing += actualRotationAmount; // !
+            vessel.Facing += actualRotationAmount; // !
         else
-            vessel.facing -= actualRotationAmount; // !
+            vessel.Facing -= actualRotationAmount; // !
 
         //movement
         float unitsPerSecondInDesiredDirection = vessel.UnitsPerSecondInDirection(command.TargetDisplacement);
@@ -600,8 +776,8 @@ static class GameplayFunctions
         float actualMoveAmount = moveAmountIfSufficientEnergy * (secondsOfEnergyAvailableThisTick / game.SecondsPerTick());
         Vector2 actualDisplacement = command.TargetDisplacement.ToVector2().normalized * actualMoveAmount;
         vessel.PowerCore.StoredEnergy -= (actualMoveAmount / desiredMoveAmount) * game.SecondsPerTick() * energyCostPerSecondInDirection; // !
-        vessel.Position.x += actualDisplacement.x;
-        vessel.Position.y += actualDisplacement.y;
+        vessel.Position.X += actualDisplacement.x;
+        vessel.Position.Y += actualDisplacement.y;
 
         //shipyards
         for (int i = 0; i < command.RunShipyards.Count; i++)
@@ -623,26 +799,26 @@ static class GameplayFunctions
                 {
                     float secondsOfEnergyAvailableForShipyard = vessel.PowerCore.StoredEnergy / shipyard.EnergyCostPerSecond();
                     float secondsOfEnergyAvailableForShipyardThisTick = Math.Min(game.SecondsPerTick(), secondsOfEnergyAvailableForShipyard);
-                    float buildSecondsRemaining = (vessel.BuildTime() - shipyard.SecondOfVesselBuilt) / shipyard.BuildSpeed();
+                    float buildSecondsRemaining = (vessel.BuildTime() - shipyard.SecondsOfVesselBuilt) / shipyard.BuildSpeed();
                     float secondsOfEnergySpent = Math.Min(secondsOfEnergyAvailableForShipyardThisTick, buildSecondsRemaining);
                     float energySpent = secondsOfEnergySpent * shipyard.EnergyCostPerSecond();
                     vessel.PowerCore.StoredEnergy -= energySpent; // !
-                    shipyard.SecondOfVesselBuilt += secondsOfEnergySpent * shipyard.BuildSpeed(); // !
-                    if (shipyard.SecondOfVesselBuilt >= vessel.BuildTime())
+                    shipyard.SecondsOfVesselBuilt += secondsOfEnergySpent * shipyard.BuildSpeed(); // !
+                    if (shipyard.SecondsOfVesselBuilt >= vessel.BuildTime())
                     {
-                        shipyard.SecondOfVesselBuilt = 0; // !
+                        shipyard.SecondsOfVesselBuilt = 0; // !
                         shipyard.BuildInProgress = false; // !
                         playerProgress.Vessels.Add(vesselToProduce); // !
                         vesselToProduce.Position = new Position
                         {
-                            x = vessel.Position.x + shipyard.RootPixelPosition.x,
-                            y = vessel.Position.y + shipyard.RootPixelPosition.y
+                            X = vessel.Position.X + shipyard.RootPixelPosition.X,
+                            Y = vessel.Position.Y + shipyard.RootPixelPosition.Y
                         }; // !
                     }
                 }
                 if (command.CancelShipyardRuns[i])
                 {
-                    shipyard.SecondOfVesselBuilt = 0; // !
+                    shipyard.SecondsOfVesselBuilt = 0; // !
                     shipyard.BuildInProgress = false; // !
                 }
             }
