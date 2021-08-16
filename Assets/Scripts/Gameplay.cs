@@ -39,7 +39,7 @@ public struct Game
 
     public float SecondsPerTick()
     {
-        return SecondsPerTurn / StatesPerTurn;
+        return (float)SecondsPerTurn / (float)StatesPerTurn;
     }
 
     public Gamestate BuildFirstGamestate()

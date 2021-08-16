@@ -26,7 +26,7 @@ public class GamestateDisplayer : MonoBehaviour
         Display(testGamestate);
         
         Command testCommand = new Command(0f,
-                                          new Position(0, 0),
+                                          new Position(1, 1),
                                           new List<bool>(),
                                           new List<bool>(),
                                           new List<bool>(),
