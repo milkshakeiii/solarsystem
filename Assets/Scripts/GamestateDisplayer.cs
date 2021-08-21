@@ -14,7 +14,12 @@ public class GamestateDisplayer : MonoBehaviour
                                            new LightHull(new PixelPosition(0, 0), new List<PixelPosition>(), new List<float>()),
                                            new DarkHull(new PixelPosition(0, 0), new List<PixelPosition>(), new List<float>()),
                                            new PowerCore(new PixelPosition(0, 0), new List<PixelPosition>(), new List<float>(), 0f, 1f, 1f),
-                                           new List<Engine>(),
+                                           new List<Engine>() { new Engine(new PixelPosition(0, 0),
+                                                                           new List<PixelPosition>(),
+                                                                           new List<float>(),
+                                                                           0,
+                                                                           1,
+                                                                           1) },
                                            new List<Laser>(),
                                            new List<Collector>(),
                                            new List<Shipyard>());
