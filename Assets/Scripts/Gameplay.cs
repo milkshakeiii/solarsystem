@@ -604,20 +604,24 @@ static class GameplayFunctions
             {
                 Command command = playerAction.VesselCommands[j];
                 Vessel vessel = playerProgress.Vessels[j];
-                GameplayFunctions.DoCommand(command, ref vessel, game, ref nextGamestate, player, ref playerProgress);
+                GameplayFunctions.DoCommand(command, j, game, nextGamestate, playerIndex);
             }
         }
+
+        Debug.Log(nextGamestate.Vessels()[0].Position.ToVector2());
 
         return nextGamestate;
     }
 
     private static void DoCommand(Command command,
-                                 ref Vessel vessel,
-                                 Game game,
-                                 ref Gamestate gamestate,
-                                 Player commandingPlayer,
-                                 ref PlayerProgress playerProgress)
+                                  int vesselIndex,
+                                  Game game,
+                                  Gamestate gamestate,
+                                  int playerIndex)
     {
+        Vessel vessel = gamestate.PlayerProgresses[playerIndex].Vessels[vesselIndex];
+        PlayerProgress playerProgress = gamestate.PlayerProgresses[playerIndex];
+        Player commandingPlayer = game.Players[playerIndex];
 
         //lasers
         for (int i = 0; i < command.ActivateLasers.Count; i++)
@@ -735,6 +739,7 @@ static class GameplayFunctions
                 {
                     Vessel enemyVessel = gamestate.PlayerProgresses[thisHit.playerIndex].Vessels[thisHit.vesselIndex];
                     enemyVessel.PixelComponents()[thisHit.pixelComponentIndex].SecondsOfDamage[thisHit.pixelIndex] += game.SecondsPerTick();
+                    gamestate.PlayerProgresses[thisHit.playerIndex].Vessels[thisHit.vesselIndex] = enemyVessel;
                 }
 
                 vessel.PowerCore.StoredEnergy -= energyCost; // !
@@ -742,17 +747,23 @@ static class GameplayFunctions
         }
 
         //delete destroyed pixels
-        foreach (Vessel damagedVessel in gamestate.Vessels())
+        for (int i = 0; i < gamestate.PlayerProgresses.Count; i++)
         {
-            List<int> deletedIndices = new List<int>();
-            foreach (PixelComponent pixelComponent in damagedVessel.PixelComponents())
+            for (int j = 0; j < gamestate.PlayerProgresses[i].Vessels.Count; j++)
             {
-                for (int i = pixelComponent.PixelPositions.Count - 1; i >= 0 ; i--)
+                Vessel damagedVessel = gamestate.PlayerProgresses[i].Vessels[j];
+                List<int> deletedIndices = new List<int>();
+                for (int k = 0; k < damagedVessel.PixelComponents().Count; k++)
                 {
-                    if (pixelComponent.SecondsOfDamage[i] < pixelComponent.SecondsToDestroy())
+                    PixelComponent pixelComponent = damagedVessel.PixelComponents()[k];
+                    for (int p = pixelComponent.PixelPositions.Count - 1; p >= 0; p--)
                     {
-                        pixelComponent.SecondsOfDamage.RemoveAt(i);
-                        pixelComponent.PixelPositions.RemoveAt(i);
+                        if (pixelComponent.SecondsOfDamage[p] < pixelComponent.SecondsToDestroy())
+                        {
+                            pixelComponent.SecondsOfDamage.RemoveAt(p);
+                            pixelComponent.PixelPositions.RemoveAt(p);
+                            //gamestate.PlayerProgresses[i].Vessels[j].SetPixelComponent(k, pixelComponent);
+                        } // !
                     }
                 }
             }
@@ -781,8 +792,8 @@ static class GameplayFunctions
         float actualMoveAmount = moveAmountIfSufficientEnergy * (secondsOfEnergyAvailableThisTick / game.SecondsPerTick());
         Vector2 actualDisplacement = command.TargetDisplacement.ToVector2().normalized * actualMoveAmount;
         vessel.PowerCore.StoredEnergy -= (actualMoveAmount / desiredMoveAmount) * game.SecondsPerTick() * energyCostPerSecondInDirection; // !
-        vessel.Position.X += actualDisplacement.x;
-        vessel.Position.Y += actualDisplacement.y;
+        vessel.Position.X += actualDisplacement.x; // !
+        vessel.Position.Y += actualDisplacement.y; // !
 
         //shipyards
         for (int i = 0; i < command.RunShipyards.Count; i++)
@@ -813,12 +824,12 @@ static class GameplayFunctions
                     {
                         shipyard.SecondsOfVesselBuilt = 0; // !
                         shipyard.BuildInProgress = false; // !
-                        playerProgress.Vessels.Add(vesselToProduce); // !
                         vesselToProduce.Position = new Position
                         {
                             X = vessel.Position.X + shipyard.RootPixelPosition.X,
                             Y = vessel.Position.Y + shipyard.RootPixelPosition.Y
                         }; // !
+                        playerProgress.Vessels.Add(vesselToProduce); // !
                     }
                 }
                 if (command.CancelShipyardRuns[i])
@@ -826,6 +837,7 @@ static class GameplayFunctions
                     shipyard.SecondsOfVesselBuilt = 0; // !
                     shipyard.BuildInProgress = false; // !
                 }
+                vessel.Shipyards[i] = shipyard;
             }
         }
 
@@ -861,5 +873,8 @@ static class GameplayFunctions
                 }
             }
         }
+
+        gamestate.PlayerProgresses[playerIndex] = playerProgress;
+        gamestate.PlayerProgresses[playerIndex].Vessels[vesselIndex] = vessel;
     }
 }
