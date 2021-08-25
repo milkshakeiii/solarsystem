@@ -30,7 +30,7 @@ public class GamestateDisplayer : MonoBehaviour
         testGame.Gamestates.Add(testGamestate);
         Display(testGamestate);
         
-        Command testCommand = new Command(0f,
+        Command testCommand = new Command(2f,
                                           new Position(1, 1),
                                           new List<bool>(),
                                           new List<bool>(),

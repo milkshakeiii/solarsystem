@@ -608,8 +608,6 @@ static class GameplayFunctions
             }
         }
 
-        Debug.Log(nextGamestate.Vessels()[0].Position.ToVector2());
-
         return nextGamestate;
     }
 

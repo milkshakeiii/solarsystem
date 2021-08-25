@@ -19,5 +19,6 @@ public class DisplayVessel : MonoBehaviour
     public void Initialize(Vessel gameVessel)
     {
         transform.position = gameVessel.Position.ToVector2();
+        transform.eulerAngles = new Vector3(0, gameVessel.Facing * Mathf.Rad2Deg, 0);
     }
 }
