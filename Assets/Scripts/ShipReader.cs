@@ -31,13 +31,15 @@ static class ShipReader
         }
         
 
-        // light hull, dark hull, power core, engine, laser, collector, shipyard
+        // light hull, dark hull, power core, engine, laser, laser focus, collector, shipyard
         Color lightHullColor = image.GetPixel(0, 0);
         Color darkHullColor = image.GetPixel(1, 0);
         Color powerCoreColor = image.GetPixel(2, 0);
         Color engineColor = image.GetPixel(3, 0);
         Color laserColor = image.GetPixel(4, 0);
-        Color collectorColor = image.GetPixel(5, 0);
+        Color laserFocusColor = image.GetPixel(5, 0);
+        Color collectorColor = image.GetPixel(6, 0);
+        Color shipyard = image.GetPixel(7, 0);
 
         if (color == lightHullColor)
         {
@@ -57,7 +59,11 @@ static class ShipReader
         }
         else if (color == laserColor)
         {
-            result = new Laser(center, pixelPositionStructs, secondsOfDamage);
+            result = new Laser(center, pixelPositionStructs, secondsOfDamage, image, laserFocusColor);
+        }
+        else if (color == laserFocusColor)
+        {
+            return null;
         }
         else if (color == collectorColor)
         {
@@ -94,6 +100,10 @@ static class ShipReader
                     PixelComponent newComponent = BuildPixelComponent(pixelPositions,
                                                                       image,
                                                                       colorHere);
+                    if (newComponent != null)
+                    {
+                        readShip.AddComponent(newComponent);
+                    }
                 }
             }
         }
