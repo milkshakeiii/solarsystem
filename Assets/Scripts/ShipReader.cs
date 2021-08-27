@@ -5,11 +5,9 @@ using UnityEngine;
 static class ShipReader
 {
     private static PixelComponent BuildPixelComponent(List<Vector2Int> pixelPositions,
-                                               Texture2D image,
-                                               Color color)
+                                                      Texture2D image,
+                                                      Color color)
     {
-        PixelComponent result;
-
         int maxX = int.MinValue;
         int maxY = int.MinValue;
         int minX = int.MaxValue;
@@ -50,6 +48,16 @@ static class ShipReader
             Color.white,
         };
 
+        if (color == lightHullColor)
+        {
+            return new LightHull(center, pixelPositionStructs, secondsOfDamage);
+        }
+        else if (color == darkHullColor)
+        {
+            return new DarkHull(center, pixelPositionStructs, secondsOfDamage);
+        }
+        // else we need an infodot
+
         List<Vector2Int> infoDotCandidates = new List<Vector2Int>();
         foreach (Vector2Int pixelPosition in pixelPositions)
         {
@@ -75,7 +83,7 @@ static class ShipReader
         }
         if (infoDotCandidates.Count == 0)
         {
-            throw new UnityException("A pixel component had no infodot.");
+            throw new UnityException("A non-hull pixel component had no infodot.");
         }
         Vector2Int infoDot = infoDotCandidates[0];
         int bestDistance = int.MaxValue;
@@ -94,40 +102,30 @@ static class ShipReader
         float quality = (float)(infoColor.r + infoColor.g + infoColor.b) / 3f;
         float size = Mathf.Sqrt(pixelPositionStructs.Count);
 
-        if (color == lightHullColor)
+        if (color == powerCoreColor)
         {
-            result = new LightHull(center, pixelPositionStructs, secondsOfDamage);
-        }
-        else if (color == darkHullColor)
-        {
-            result = new DarkHull(center, pixelPositionStructs, secondsOfDamage);
-        }
-        else if (color == powerCoreColor)
-        {
-            result = new PowerCore(center, pixelPositionStructs, secondsOfDamage, facing, size, quality);
+            return new PowerCore(center, pixelPositionStructs, secondsOfDamage, facing, size, quality);
         }
         else if (color == engineColor)
         {
-            result = new Engine(center, pixelPositionStructs, secondsOfDamage, facing, size, quality);
+            return new Engine(center, pixelPositionStructs, secondsOfDamage, facing, size, quality);
         }
         else if (color == laserColor)
         {
-            result = new Laser(center, pixelPositionStructs, secondsOfDamage, facing, size, quality);
+            return new Laser(center, pixelPositionStructs, secondsOfDamage, facing, size, quality);
         }
         else if (color == collectorColor)
         {
-            result = new Collector(center, pixelPositionStructs, secondsOfDamage, facing, size, quality);
+            return new Collector(center, pixelPositionStructs, secondsOfDamage, facing, size, quality);
         }
         else if (color == shipyardColor)
         {
-            result = new Shipyard(center, pixelPositionStructs, secondsOfDamage, facing, size, quality);
+            return new Shipyard(center, pixelPositionStructs, secondsOfDamage, facing, size, quality);
         }
         else
         {
             return null;
         }
-
-        return result;
     }
 
     public static Vessel ReadShip(string filepath)
@@ -135,9 +133,10 @@ static class ShipReader
         Vessel readShip = new Vessel();
 
         byte[] imageData = System.IO.File.ReadAllBytes(filepath);
-        int height = 46;
-        int width = 45;
-        Texture2D image = new Texture2D(width, height);       
+        Texture2D image = new Texture2D(2, 2);
+        ImageConversion.LoadImage(image, imageData);
+        int height = image.height;
+        int width = image.width;
 
         HashSet<Vector2Int> pixelsScanned = new HashSet<Vector2Int>();
 
@@ -149,7 +148,7 @@ static class ShipReader
                 if (!pixelsScanned.Contains(position))
                 {
                     Color colorHere = image.GetPixel(j, i);
-                    List<Vector2Int> pixelPositions = BucketFillExtremes(position, colorHere, pixelsScanned, image);
+                    List<Vector2Int> pixelPositions = BucketFill(position, colorHere, pixelsScanned, image);
                     PixelComponent newComponent = BuildPixelComponent(pixelPositions,
                                                                       image,
                                                                       colorHere);
@@ -164,7 +163,7 @@ static class ShipReader
         return readShip;
     }
 
-    private static List<Vector2Int> BucketFillExtremes(Vector2Int start, Color color, HashSet<Vector2Int> pixelsScanned, Texture2D image)
+    private static List<Vector2Int> BucketFill(Vector2Int start, Color color, HashSet<Vector2Int> pixelsScanned, Texture2D image)
     {
         Stack<Vector2Int> frontier = new Stack<Vector2Int>();
         List<Vector2Int> foundPixels = new List<Vector2Int>();
