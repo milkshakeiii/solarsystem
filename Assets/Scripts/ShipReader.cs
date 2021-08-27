@@ -166,7 +166,7 @@ static class ShipReader
 
     private static List<Vector2Int> BucketFillExtremes(Vector2Int start, Color color, HashSet<Vector2Int> pixelsScanned, Texture2D image)
     {
-        Stack<Vector2Int> frontier = new Stack<Vector2Int>;
+        Stack<Vector2Int> frontier = new Stack<Vector2Int>();
         List<Vector2Int> foundPixels = new List<Vector2Int>();
         frontier.Push(start);
         while (frontier.Count > 0)

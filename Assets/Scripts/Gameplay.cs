@@ -187,6 +187,10 @@ public struct Vessel
         Shipyards = shipyards;
     }
 
+    public void AddComponent(PixelComponent component)
+    {
+        component.AddToVessel(this);
+    }
 
     public static float MaxPortionMaxEnergySpentTurningPerSecond()
     {
@@ -305,7 +309,7 @@ public struct Asteroid
 }
 
 [Serializable]
-public class PixelComponent
+public abstract class PixelComponent
 {
     public PixelPosition RootPixelPosition; //relative to parent vessel
     public List<PixelPosition> PixelPositions; //relative to root pixel position
@@ -322,6 +326,8 @@ public class PixelComponent
     {
         return 1f;
     }
+
+    public abstract void AddToVessel(Vessel vessel);
 }
 
 [Serializable]
@@ -331,6 +337,11 @@ public class LightHull : PixelComponent
                      List<PixelPosition> pixelPositions,
                      List<float> secondsOfDamage) : base(rootPixelPosition, pixelPositions, secondsOfDamage)
     {
+    }
+
+    public override void AddToVessel(Vessel vessel)
+    {
+        vessel.LightHull = this;
     }
 }
 
@@ -347,10 +358,15 @@ public class DarkHull : PixelComponent
     {
         return 3f;
     }
+
+    public override void AddToVessel(Vessel vessel)
+    {
+        vessel.DarkHull = this;
+    }
 }
 
 [Serializable]
-public class FunctionalComponent : PixelComponent
+public abstract class FunctionalComponent : PixelComponent
 {
     public float Facing; //up is 0 or 2pi
     public float Size;
@@ -393,6 +409,11 @@ public class PowerCore : FunctionalComponent
     {
         return Quality;
     }
+
+    public override void AddToVessel(Vessel vessel)
+    {
+        vessel.PowerCore = this;
+    }
 }
 
 [Serializable]
@@ -415,6 +436,11 @@ public class Engine : FunctionalComponent
     public float EnergyCostPerSecond()
     {
         return Size * (1 / (1 + Quality));
+    }
+
+    public override void AddToVessel(Vessel vessel)
+    {
+        vessel.Engines.Add(this);
     }
 }
 
@@ -443,6 +469,11 @@ public class Laser : FunctionalComponent
     public float Length()
     {
         return Quality * 5;
+    }
+
+    public override void AddToVessel(Vessel vessel)
+    {
+        vessel.Lasers.Add(this);
     }
 }
 
@@ -482,6 +513,11 @@ public class Collector : FunctionalComponent
     {
         return Size;
     }
+
+    public override void AddToVessel(Vessel vessel)
+    {
+        vessel.Collectors.Add(this);
+    }
 }
 
 [Serializable]
@@ -509,6 +545,11 @@ public class Shipyard : FunctionalComponent
     public float BuildSpeed()
     {
         return Quality;
+    }
+
+    public override void AddToVessel(Vessel vessel)
+    {
+        vessel.Shipyards.Add(this);
     }
 }
 
