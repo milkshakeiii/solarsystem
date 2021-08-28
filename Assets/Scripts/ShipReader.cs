@@ -8,26 +8,6 @@ static class ShipReader
                                                       Texture2D image,
                                                       Color color)
     {
-        int maxX = int.MinValue;
-        int maxY = int.MinValue;
-        int minX = int.MaxValue;
-        int minY = int.MaxValue;
-        foreach (Vector2Int foundPixel in pixelPositions)
-        {
-            maxX = Mathf.Max(foundPixel.x, maxX);
-            maxY = Mathf.Max(foundPixel.y, maxY);
-            minX = Mathf.Min(foundPixel.x, minX);
-            minY = Mathf.Min(foundPixel.y, minY);
-        }
-        PixelPosition center = new PixelPosition((minX + maxX) / 2, (minY) + (maxY) / 2);
-        List<PixelPosition> pixelPositionStructs = new List<PixelPosition>();
-        List<float> secondsOfDamage = new List<float>();
-        foreach (Vector2Int pixelPosition in pixelPositions)
-        {
-            pixelPositionStructs.Add(new PixelPosition(pixelPosition.x, pixelPosition.y));
-            secondsOfDamage.Add(0f);
-        }
-
         // light hull, dark hull, power core, engine, laser, laser focus, collector, shipyard
         Color lightHullColor = image.GetPixel(0, 0);
         Color darkHullColor = image.GetPixel(1, 0);
@@ -47,6 +27,35 @@ static class ShipReader
             shipyardColor,
             Color.white,
         };
+
+        if (!usedColors.Contains(color))
+        {
+            return null;
+        }
+        else if (color == Color.white)
+        {
+            return null;
+        }
+
+        int maxX = int.MinValue;
+        int maxY = int.MinValue;
+        int minX = int.MaxValue;
+        int minY = int.MaxValue;
+        foreach (Vector2Int foundPixel in pixelPositions)
+        {
+            maxX = Mathf.Max(foundPixel.x, maxX);
+            maxY = Mathf.Max(foundPixel.y, maxY);
+            minX = Mathf.Min(foundPixel.x, minX);
+            minY = Mathf.Min(foundPixel.y, minY);
+        }
+        PixelPosition center = new PixelPosition((minX + maxX) / 2, (minY) + (maxY) / 2);
+        List<PixelPosition> pixelPositionStructs = new List<PixelPosition>();
+        List<float> secondsOfDamage = new List<float>();
+        foreach (Vector2Int pixelPosition in pixelPositions)
+        {
+            pixelPositionStructs.Add(new PixelPosition(pixelPosition.x, pixelPosition.y));
+            secondsOfDamage.Add(0f);
+        }
 
         if (color == lightHullColor)
         {
@@ -74,7 +83,7 @@ static class ShipReader
                 if (!OutOfBoundsOrTopRow(adjacentPosition, image))
                 {
                     Color adjacentColor = image.GetPixel(adjacentPosition.x, adjacentPosition.y);
-                    if (!usedColors.Contains(adjacentColor))
+                    if (adjacentColor.a < 1f)
                     {
                         infoDotCandidates.Add(adjacentPosition);
                     }
@@ -85,21 +94,15 @@ static class ShipReader
         {
             throw new UnityException("A non-hull pixel component had no infodot.");
         }
-        Vector2Int infoDot = infoDotCandidates[0];
-        int bestDistance = int.MaxValue;
-        foreach (Vector2Int candidate in infoDotCandidates)
+        if (infoDotCandidates.Count > 1)
         {
-            int distance = Mathf.Abs(candidate.x - center.X) + Mathf.Abs(candidate.y - center.Y);
-            if (distance < bestDistance)
-            {
-                bestDistance = distance;
-                infoDot = candidate;
-            }
+            throw new UnityException("A non-hull pixel component had more than one infodot.");
         }
+        Vector2Int infoDot = infoDotCandidates[0];
         Color infoColor = image.GetPixel(infoDot.x, infoDot.y);
 
         float facing = Mathf.Atan2(infoDot.y - center.Y, infoDot.x - center.X);
-        float quality = (float)(infoColor.r + infoColor.g + infoColor.b) / 3f;
+        float quality = infoColor.a;
         float size = Mathf.Sqrt(pixelPositionStructs.Count);
 
         if (color == powerCoreColor)
@@ -118,13 +121,9 @@ static class ShipReader
         {
             return new Collector(center, pixelPositionStructs, secondsOfDamage, facing, size, quality);
         }
-        else if (color == shipyardColor)
+        else // (color == shipyardColor)
         {
             return new Shipyard(center, pixelPositionStructs, secondsOfDamage, facing, size, quality);
-        }
-        else
-        {
-            return null;
         }
     }
 
