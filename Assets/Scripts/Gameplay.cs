@@ -341,6 +341,7 @@ public class LightHull : PixelComponent
 
     public override void AddToVessel(Vessel vessel)
     {
+        Debug.Log("added lighthull");
         vessel.LightHull = this;
     }
 }
@@ -361,6 +362,7 @@ public class DarkHull : PixelComponent
 
     public override void AddToVessel(Vessel vessel)
     {
+        Debug.Log("added darkhull");
         vessel.DarkHull = this;
     }
 }
@@ -412,6 +414,7 @@ public class PowerCore : FunctionalComponent
 
     public override void AddToVessel(Vessel vessel)
     {
+        Debug.Log("added powercore");
         vessel.PowerCore = this;
     }
 }
@@ -440,6 +443,7 @@ public class Engine : FunctionalComponent
 
     public override void AddToVessel(Vessel vessel)
     {
+        Debug.Log("added engine");
         vessel.Engines.Add(this);
     }
 }
@@ -473,6 +477,7 @@ public class Laser : FunctionalComponent
 
     public override void AddToVessel(Vessel vessel)
     {
+        Debug.Log("added laser");
         vessel.Lasers.Add(this);
     }
 }
@@ -516,6 +521,7 @@ public class Collector : FunctionalComponent
 
     public override void AddToVessel(Vessel vessel)
     {
+        Debug.Log("added collector");
         vessel.Collectors.Add(this);
     }
 }
@@ -549,6 +555,7 @@ public class Shipyard : FunctionalComponent
 
     public override void AddToVessel(Vessel vessel)
     {
+        Debug.Log("added shipyard");
         vessel.Shipyards.Add(this);
     }
 }

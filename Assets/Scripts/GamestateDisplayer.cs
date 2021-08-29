@@ -9,20 +9,7 @@ public class GamestateDisplayer : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        Vessel testMothership = new Vessel(new Position(0, 0),
-                                           0,
-                                           new LightHull(new PixelPosition(0, 0), new List<PixelPosition>(), new List<float>()),
-                                           new DarkHull(new PixelPosition(0, 0), new List<PixelPosition>(), new List<float>()),
-                                           new PowerCore(new PixelPosition(0, 0), new List<PixelPosition>(), new List<float>(), 0f, 1f, 1f),
-                                           new List<Engine>() { new Engine(new PixelPosition(0, 0),
-                                                                           new List<PixelPosition>(),
-                                                                           new List<float>(),
-                                                                           0,
-                                                                           1,
-                                                                           1) },
-                                           new List<Laser>(),
-                                           new List<Collector>(),
-                                           new List<Shipyard>());
+        Vessel testMothership = ShipReader.ReadShip("C:\\Users\\milks\\Documents\\testship.png");
         List<Vessel> testDeck = new List<Vessel>() { testMothership };
         Player testPlayer = new Player("test", 1000f, testDeck, new List<float>() { 0 }, 0);
         Game testGame = new Game(20, 10, new List<Gamestate>(), 100f, 100f, new List<Player>() { testPlayer }, 1000000, 15, 10);

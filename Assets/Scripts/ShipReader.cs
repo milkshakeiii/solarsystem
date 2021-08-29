@@ -9,13 +9,13 @@ static class ShipReader
                                                       Color color)
     {
         // light hull, dark hull, power core, engine, laser, laser focus, collector, shipyard
-        Color lightHullColor = image.GetPixel(0, 0);
-        Color darkHullColor = image.GetPixel(1, 0);
-        Color powerCoreColor = image.GetPixel(2, 0);
-        Color engineColor = image.GetPixel(3, 0);
-        Color laserColor = image.GetPixel(4, 0);
-        Color collectorColor = image.GetPixel(5, 0);
-        Color shipyardColor = image.GetPixel(6, 0);
+        Color lightHullColor = image.GetPixel(0, 45);
+        Color darkHullColor = image.GetPixel(1, 45);
+        Color powerCoreColor = image.GetPixel(2, 45);
+        Color engineColor = image.GetPixel(3, 45);
+        Color laserColor = image.GetPixel(4, 45);
+        Color collectorColor = image.GetPixel(5, 45);
+        Color shipyardColor = image.GetPixel(6, 45);
         HashSet<Color> usedColors = new HashSet<Color>()
         {
             lightHullColor,
@@ -25,14 +25,9 @@ static class ShipReader
             laserColor,
             collectorColor,
             shipyardColor,
-            Color.white,
         };
 
         if (!usedColors.Contains(color))
-        {
-            return null;
-        }
-        else if (color == Color.white)
         {
             return null;
         }
@@ -67,7 +62,7 @@ static class ShipReader
         }
         // else we need an infodot
 
-        List<Vector2Int> infoDotCandidates = new List<Vector2Int>();
+        HashSet<Vector2Int> infoDotCandidates = new HashSet<Vector2Int>();
         foreach (Vector2Int pixelPosition in pixelPositions)
         {
             List<Color> adjacentColors = new List<Color>();
@@ -98,7 +93,7 @@ static class ShipReader
         {
             throw new UnityException("A non-hull pixel component had more than one infodot.");
         }
-        Vector2Int infoDot = infoDotCandidates[0];
+        Vector2Int infoDot = infoDotCandidates.GetEnumerator().Current;
         Color infoColor = image.GetPixel(infoDot.x, infoDot.y);
 
         float facing = Mathf.Atan2(infoDot.y - center.Y, infoDot.x - center.X);
@@ -129,7 +124,15 @@ static class ShipReader
 
     public static Vessel ReadShip(string filepath)
     {
-        Vessel readShip = new Vessel();
+        Vessel readShip = new Vessel(new Position(0, 0),
+                                     0f,
+                                     null,
+                                     null,
+                                     null,
+                                     new List<Engine>(),
+                                     new List<Laser>(),
+                                     new List<Collector>(),
+                                     new List<Shipyard>());
 
         byte[] imageData = System.IO.File.ReadAllBytes(filepath);
         Texture2D image = new Texture2D(2, 2);
@@ -139,7 +142,7 @@ static class ShipReader
 
         HashSet<Vector2Int> pixelsScanned = new HashSet<Vector2Int>();
 
-        for (int i = 1; i < height; i++)
+        for (int i = 0; i < height-1; i++)
         {
             for (int j = 0; j < width; j++)
             {
@@ -148,6 +151,10 @@ static class ShipReader
                 {
                     Color colorHere = image.GetPixel(j, i);
                     List<Vector2Int> pixelPositions = BucketFill(position, colorHere, pixelsScanned, image);
+                    if (pixelPositions.Count > 0)
+                    {
+                        Debug.Log(pixelPositions.Count);
+                    }
                     PixelComponent newComponent = BuildPixelComponent(pixelPositions,
                                                                       image,
                                                                       colorHere);
@@ -171,12 +178,18 @@ static class ShipReader
         {
             Vector2Int currentPosition = frontier.Pop();
             if (OutOfBoundsOrTopRow(currentPosition, image))
+            {
                 continue;
+            }
             if (pixelsScanned.Contains(currentPosition))
+            {
                 continue;
+            }
             Color currentColor = image.GetPixel(currentPosition.x, currentPosition.y);
-            if (currentColor != color)
+            if (!ColorMatchExceptAlpha(currentColor, color))
+            {
                 continue;
+            }
             pixelsScanned.Add(currentPosition);
             foundPixels.Add(currentPosition);
             List<Vector2Int> adjacentPixels = new List<Vector2Int>() {new Vector2Int(currentPosition.x+1, currentPosition.y),
@@ -195,9 +208,14 @@ static class ShipReader
 
     private static bool OutOfBoundsOrTopRow(Vector2 position, Texture2D image)
     {
-        return position.x >= 0 &&
-               position.x < image.width &&
-               position.y >= 1 &&
-               position.y < image.height;
+        return position.x < 0 ||
+               position.x >= image.width ||
+               position.y < 0 ||
+               position.y >= image.height-1;
+    }
+
+    private static bool ColorMatchExceptAlpha(Color a, Color b)
+    {
+        return a.r == b.r && a.g == b.g && a.b == b.b;
     }
 }
