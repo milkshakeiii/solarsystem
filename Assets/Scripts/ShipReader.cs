@@ -93,7 +93,7 @@ static class ShipReader
         {
             throw new UnityException("A non-hull pixel component had more than one infodot.");
         }
-        Vector2Int infoDot = infoDotCandidates.GetEnumerator().Current;
+        Vector2Int infoDot = (new List<Vector2Int>(infoDotCandidates))[0];
         Color infoColor = image.GetPixel(infoDot.x, infoDot.y);
 
         float facing = Mathf.Atan2(infoDot.y - center.Y, infoDot.x - center.X);
@@ -151,10 +151,6 @@ static class ShipReader
                 {
                     Color colorHere = image.GetPixel(j, i);
                     List<Vector2Int> pixelPositions = BucketFill(position, colorHere, pixelsScanned, image);
-                    if (pixelPositions.Count > 0)
-                    {
-                        Debug.Log(pixelPositions.Count);
-                    }
                     PixelComponent newComponent = BuildPixelComponent(pixelPositions,
                                                                       image,
                                                                       colorHere);
