@@ -28,7 +28,7 @@ public class DisplayVessel : MonoBehaviour
             }
         }
 
-        transform.position = gameVessel.Position.ToVector2();
-        transform.eulerAngles = new Vector3(0, gameVessel.Facing * Mathf.Rad2Deg, 0);
+        transform.position = gameVessel.WorldPosition.ToVector2();
+        transform.eulerAngles = new Vector3(0, 0, gameVessel.Facing * Mathf.Rad2Deg);
     }
 }

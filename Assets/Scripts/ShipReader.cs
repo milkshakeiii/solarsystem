@@ -4,7 +4,8 @@ using UnityEngine;
 
 static class ShipReader
 {
-    private static PixelComponent BuildPixelComponent(List<Vector2Int> pixelPositions,
+    private static PixelComponent BuildPixelComponent(Vector2Int shipCenter,
+                                                      List<Vector2Int> pixelPositions,
                                                       Texture2D image,
                                                       Color color)
     {
@@ -48,7 +49,7 @@ static class ShipReader
         List<float> secondsOfDamage = new List<float>();
         foreach (Vector2Int pixelPosition in pixelPositions)
         {
-            pixelPositionStructs.Add(new PixelPosition(pixelPosition.x, pixelPosition.y));
+            pixelPositionStructs.Add(new PixelPosition(pixelPosition.x-shipCenter.x, pixelPosition.y-shipCenter.y));
             secondsOfDamage.Add(0f);
         }
 
@@ -139,6 +140,7 @@ static class ShipReader
         ImageConversion.LoadImage(image, imageData);
         int height = image.height;
         int width = image.width;
+        Vector2Int shipCenter = new Vector2Int(height/2, width/2);
 
         HashSet<Vector2Int> pixelsScanned = new HashSet<Vector2Int>();
 
@@ -151,7 +153,8 @@ static class ShipReader
                 {
                     Color colorHere = image.GetPixel(j, i);
                     List<Vector2Int> pixelPositions = BucketFill(position, colorHere, pixelsScanned, image);
-                    PixelComponent newComponent = BuildPixelComponent(pixelPositions,
+                    PixelComponent newComponent = BuildPixelComponent(shipCenter,
+                                                                      pixelPositions,
                                                                       image,
                                                                       colorHere);
                     if (newComponent != null)

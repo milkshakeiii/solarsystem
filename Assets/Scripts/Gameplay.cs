@@ -155,7 +155,7 @@ public struct Position
 [Serializable]
 public struct Vessel
 {
-    public Position Position;
+    public Position WorldPosition;
     public float Facing;
 
     public LightHull LightHull;
@@ -176,7 +176,7 @@ public struct Vessel
                   List<Collector> collectors,
                   List<Shipyard> shipyards)
     {
-        Position = position;
+        WorldPosition = position;
         Facing = facing;
         LightHull = lightHull;
         DarkHull = darkHull;
@@ -275,7 +275,7 @@ public struct Vessel
     {
         Position floatPosition = new Position { X = pixelPosition.X, Y = pixelPosition.Y };
         Position rotatedFloatPosition = floatPosition.Rotate(Facing);
-        return new Position { X = Position.X + rotatedFloatPosition.X, Y = Position.Y + rotatedFloatPosition.Y };
+        return new Position { X = WorldPosition.X + rotatedFloatPosition.X, Y = WorldPosition.Y + rotatedFloatPosition.Y };
     }
 }
 
@@ -820,7 +820,7 @@ static class GameplayFunctions
                     PixelComponent pixelComponent = damagedVessel.PixelComponents()[k];
                     for (int p = pixelComponent.PixelPositions.Count - 1; p >= 0; p--)
                     {
-                        if (pixelComponent.SecondsOfDamage[p] < pixelComponent.SecondsToDestroy())
+                        if (pixelComponent.SecondsOfDamage[p] >= pixelComponent.SecondsToDestroy())
                         {
                             pixelComponent.SecondsOfDamage.RemoveAt(p);
                             pixelComponent.PixelPositions.RemoveAt(p);
@@ -854,8 +854,8 @@ static class GameplayFunctions
         float actualMoveAmount = moveAmountIfSufficientEnergy * (secondsOfEnergyAvailableThisTick / game.SecondsPerTick());
         Vector2 actualDisplacement = command.TargetDisplacement.ToVector2().normalized * actualMoveAmount;
         vessel.PowerCore.StoredEnergy -= (actualMoveAmount / desiredMoveAmount) * game.SecondsPerTick() * energyCostPerSecondInDirection; // !
-        vessel.Position.X += actualDisplacement.x; // !
-        vessel.Position.Y += actualDisplacement.y; // !
+        vessel.WorldPosition.X += actualDisplacement.x; // !
+        vessel.WorldPosition.Y += actualDisplacement.y; // !
 
         //shipyards
         for (int i = 0; i < command.RunShipyards.Count; i++)
@@ -886,10 +886,10 @@ static class GameplayFunctions
                     {
                         shipyard.SecondsOfVesselBuilt = 0; // !
                         shipyard.BuildInProgress = false; // !
-                        vesselToProduce.Position = new Position
+                        vesselToProduce.WorldPosition = new Position
                         {
-                            X = vessel.Position.X + shipyard.RootPixelPosition.X,
-                            Y = vessel.Position.Y + shipyard.RootPixelPosition.Y
+                            X = vessel.WorldPosition.X + shipyard.RootPixelPosition.X,
+                            Y = vessel.WorldPosition.Y + shipyard.RootPixelPosition.Y
                         }; // !
                         playerProgress.Vessels.Add(vesselToProduce); // !
                     }
@@ -914,7 +914,7 @@ static class GameplayFunctions
                 bool asteroidExistsInRange = false;
                 foreach (Asteroid asteroid in gamestate.Asteroids)
                 {
-                    Vector2 collectorSpacePosition = vessel.Position.ToVector2() + collector.RootPixelPosition.ToVector2();
+                    Vector2 collectorSpacePosition = vessel.WorldPosition.ToVector2() + collector.RootPixelPosition.ToVector2();
                     float squareDistanceToAsteroid = Vector2.SqrMagnitude(collectorSpacePosition - asteroid.Position.ToVector2());
                     bool inRange = squareDistanceToAsteroid < collector.CollectionRadius() * collector.CollectionRadius();
                     asteroidExistsInRange = asteroidExistsInRange || inRange;
