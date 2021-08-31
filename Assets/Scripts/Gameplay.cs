@@ -189,7 +189,7 @@ public struct Vessel
 
     public void AddComponent(PixelComponent component)
     {
-        component.AddToVessel(this);
+        component.AddToVessel(ref this);
     }
 
     public static float MaxPortionMaxEnergySpentTurningPerSecond()
@@ -232,6 +232,8 @@ public struct Vessel
         return LightHull.PixelPositions.Count + DarkHull.PixelPositions.Count * 2 + componentsWeight;
     }
 
+    private const float ENGINE_CONSTANT_SCALAR = 10f;
+
     public float UnitsPerSecondInDirection(Position direction)
     {
         float directionFacing = Vector2.Angle(Vector2.up, direction.ToVector2()) * Mathf.Deg2Rad;
@@ -241,7 +243,7 @@ public struct Vessel
             float facingDifference = directionFacing % (2 * (float)Math.PI) - Facing % (2 * (float)Math.PI);
             float facingDifferenceClamped = Mathf.Clamp(facingDifference, -(float)Math.PI, (float)Math.PI);
             float facingDifferenceRatio = Math.Abs(facingDifferenceClamped / (float)Math.PI);
-            result += (1 - facingDifferenceRatio) * engine.ThrustPerSecond() * (1 / Weight());
+            result += (1 - facingDifferenceRatio) * ENGINE_CONSTANT_SCALAR * engine.ThrustPerSecond() * (1 / Weight());
         }
         return result;
     }
@@ -327,7 +329,7 @@ public abstract class PixelComponent
         return 1f;
     }
 
-    public abstract void AddToVessel(Vessel vessel);
+    public abstract void AddToVessel(ref Vessel vessel);
 }
 
 [Serializable]
@@ -339,9 +341,9 @@ public class LightHull : PixelComponent
     {
     }
 
-    public override void AddToVessel(Vessel vessel)
+    public override void AddToVessel(ref Vessel vessel)
     {
-        Debug.Log("added lighthull");
+        //Debug.Log("added lighthull");
         vessel.LightHull = this;
     }
 }
@@ -360,9 +362,9 @@ public class DarkHull : PixelComponent
         return 3f;
     }
 
-    public override void AddToVessel(Vessel vessel)
+    public override void AddToVessel(ref Vessel vessel)
     {
-        Debug.Log("added darkhull");
+        //Debug.Log("added darkhull");
         vessel.DarkHull = this;
     }
 }
@@ -412,9 +414,9 @@ public class PowerCore : FunctionalComponent
         return Quality;
     }
 
-    public override void AddToVessel(Vessel vessel)
+    public override void AddToVessel(ref Vessel vessel)
     {
-        Debug.Log("added powercore");
+        //Debug.Log("added powercore");
         vessel.PowerCore = this;
     }
 }
@@ -441,9 +443,9 @@ public class Engine : FunctionalComponent
         return Size * (1 / (1 + Quality));
     }
 
-    public override void AddToVessel(Vessel vessel)
+    public override void AddToVessel(ref Vessel vessel)
     {
-        Debug.Log("added engine");
+        //Debug.Log("added engine");
         vessel.Engines.Add(this);
     }
 }
@@ -475,9 +477,9 @@ public class Laser : FunctionalComponent
         return Quality * 5;
     }
 
-    public override void AddToVessel(Vessel vessel)
+    public override void AddToVessel(ref Vessel vessel)
     {
-        Debug.Log("added laser");
+        //Debug.Log("added laser");
         vessel.Lasers.Add(this);
     }
 }
@@ -519,9 +521,9 @@ public class Collector : FunctionalComponent
         return Size;
     }
 
-    public override void AddToVessel(Vessel vessel)
+    public override void AddToVessel(ref Vessel vessel)
     {
-        Debug.Log("added collector");
+        //Debug.Log("added collector");
         vessel.Collectors.Add(this);
     }
 }
@@ -553,9 +555,9 @@ public class Shipyard : FunctionalComponent
         return Quality;
     }
 
-    public override void AddToVessel(Vessel vessel)
+    public override void AddToVessel(ref Vessel vessel)
     {
-        Debug.Log("added shipyard");
+        //Debug.Log("added shipyard");
         vessel.Shipyards.Add(this);
     }
 }
@@ -626,6 +628,7 @@ struct BeamHit
 
 static class GameplayFunctions
 {
+
     public static Gamestate NextGamestate(Game game, Gamestate sourceGamestate, GameTick doTurn)
     {
         string sourceJson = JsonUtility.ToJson(sourceGamestate); //for purpose of making a deep copy
