@@ -10,9 +10,6 @@ public class GamestateDisplayer : MonoBehaviour
     void Start()
     {
         Vessel testMothership = ShipReader.ReadShip("C:\\Users\\milks\\Documents\\testship.png");
-        Debug.Log(testMothership.Engines[1].Quality);
-        Debug.Log(testMothership.Engines[1].Size);
-        Debug.Log(testMothership.Engines[1].Facing);
         List<Vessel> testDeck = new List<Vessel>() { testMothership };
         Player testPlayer = new Player("test", 1000f, testDeck, new List<float>() { 0 }, 0);
         Game testGame = new Game(20, 10, new List<Gamestate>(), 100f, 100f, new List<Player>() { testPlayer }, 1000000, 15, 10);
