@@ -54,11 +54,11 @@ static class ShipReader
 
         if (color == lightHullColor)
         {
-            return new LightHull(center, pixelPositionStructs, secondsOfDamage);
+            return new LightHull(center, pixelPositionStructs, secondsOfDamage, color);
         }
         else if (color == darkHullColor)
         {
-            return new DarkHull(center, pixelPositionStructs, secondsOfDamage);
+            return new DarkHull(center, pixelPositionStructs, secondsOfDamage, color);
         }
         // else we need an infodot
 
@@ -102,23 +102,23 @@ static class ShipReader
 
         if (color == powerCoreColor)
         {
-            return new PowerCore(center, pixelPositionStructs, secondsOfDamage, facing, size, quality);
+            return new PowerCore(center, pixelPositionStructs, secondsOfDamage, color, facing, size, quality);
         }
         else if (color == engineColor)
         {
-            return new Engine(center, pixelPositionStructs, secondsOfDamage, facing, size, quality);
+            return new Engine(center, pixelPositionStructs, secondsOfDamage, color, facing, size, quality);
         }
         else if (color == laserColor)
         {
-            return new Laser(center, pixelPositionStructs, secondsOfDamage, facing, size, quality);
+            return new Laser(center, pixelPositionStructs, secondsOfDamage, color, facing, size, quality);
         }
         else if (color == collectorColor)
         {
-            return new Collector(center, pixelPositionStructs, secondsOfDamage, facing, size, quality);
+            return new Collector(center, pixelPositionStructs, secondsOfDamage, color, facing, size, quality);
         }
         else // (color == shipyardColor)
         {
-            return new Shipyard(center, pixelPositionStructs, secondsOfDamage, facing, size, quality);
+            return new Shipyard(center, pixelPositionStructs, secondsOfDamage, color, facing, size, quality);
         }
     }
 

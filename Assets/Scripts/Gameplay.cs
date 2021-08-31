@@ -315,13 +315,18 @@ public abstract class PixelComponent
 {
     public PixelPosition RootPixelPosition; //relative to parent vessel
     public List<PixelPosition> PixelPositions; //relative to root pixel position
+    public Color Color;
     public List<float> SecondsOfDamage;
 
-    public PixelComponent(PixelPosition rootPixelPosition, List<PixelPosition> pixelPositions, List<float> secondsOfDamage)
+    public PixelComponent(PixelPosition rootPixelPosition,
+                          List<PixelPosition> pixelPositions,
+                          List<float> secondsOfDamage,
+                          Color color)
     {
         RootPixelPosition = rootPixelPosition;
         PixelPositions = pixelPositions;
         SecondsOfDamage = secondsOfDamage;
+        Color = color;
     }
 
     public virtual float SecondsToDestroy()
@@ -337,7 +342,8 @@ public class LightHull : PixelComponent
 {
     public LightHull(PixelPosition rootPixelPosition, 
                      List<PixelPosition> pixelPositions,
-                     List<float> secondsOfDamage) : base(rootPixelPosition, pixelPositions, secondsOfDamage)
+                     List<float> secondsOfDamage,
+                     Color color) : base(rootPixelPosition, pixelPositions, secondsOfDamage, color)
     {
     }
 
@@ -353,7 +359,8 @@ public class DarkHull : PixelComponent
 {
     public DarkHull(PixelPosition rootPixelPosition,
                     List<PixelPosition> pixelPositions,
-                    List<float> secondsOfDamage) : base(rootPixelPosition, pixelPositions, secondsOfDamage)
+                    List<float> secondsOfDamage,
+                    Color color) : base(rootPixelPosition, pixelPositions, secondsOfDamage, color)
     {
     }
 
@@ -379,9 +386,10 @@ public abstract class FunctionalComponent : PixelComponent
     public FunctionalComponent(PixelPosition rootPixelPosition,
                                List<PixelPosition> pixelPositions,
                                List<float> secondsOfDamage,
+                               Color color,
                                float facing,
                                float size,
-                               float quality) : base(rootPixelPosition, pixelPositions, secondsOfDamage)
+                               float quality) : base(rootPixelPosition, pixelPositions, secondsOfDamage, color)
     {
         Facing = facing;
         Size = size;
@@ -397,9 +405,10 @@ public class PowerCore : FunctionalComponent
     public PowerCore(PixelPosition rootPixelPosition,
                      List<PixelPosition> pixelPositions,
                      List<float> secondsOfDamage,
+                     Color color,
                      float facing,
                      float size,
-                     float quality) : base(rootPixelPosition, pixelPositions, secondsOfDamage, facing, size, quality)
+                     float quality) : base(rootPixelPosition, pixelPositions, secondsOfDamage, color, facing, size, quality)
     {
         StoredEnergy = MaxEnergy();
     }
@@ -427,9 +436,10 @@ public class Engine : FunctionalComponent
     public Engine(PixelPosition rootPixelPosition,
                   List<PixelPosition> pixelPositions,
                   List<float> secondsOfDamage,
+                  Color color,
                   float facing,
                   float size,
-                  float quality) : base(rootPixelPosition, pixelPositions, secondsOfDamage, facing, size, quality)
+                  float quality) : base(rootPixelPosition, pixelPositions, secondsOfDamage, color, facing, size, quality)
     {
     }
 
@@ -456,9 +466,10 @@ public class Laser : FunctionalComponent
     public Laser(PixelPosition rootPixelPosition,
                  List<PixelPosition> pixelPositions,
                  List<float> secondsOfDamage,
+                 Color color,
                  float facing,
                  float size,
-                 float quality) : base(rootPixelPosition, pixelPositions, secondsOfDamage, facing, size, quality)
+                 float quality) : base(rootPixelPosition, pixelPositions, secondsOfDamage, color, facing, size, quality)
     {
     }
 
@@ -490,9 +501,10 @@ public class Collector : FunctionalComponent
     public Collector(PixelPosition rootPixelPosition,
                      List<PixelPosition> pixelPositions,
                      List<float> secondsOfDamage,
+                     Color color,
                      float facing,
                      float size,
-                     float quality) : base(rootPixelPosition, pixelPositions, secondsOfDamage, facing, size, quality)
+                     float quality) : base(rootPixelPosition, pixelPositions, secondsOfDamage, color, facing, size, quality)
     {
     }
 
@@ -537,9 +549,10 @@ public class Shipyard : FunctionalComponent
     public Shipyard(PixelPosition rootPixelPosition,
                     List<PixelPosition> pixelPositions,
                     List<float> secondsOfDamage,
+                    Color color,
                     float facing,
                     float size,
-                    float quality) : base(rootPixelPosition, pixelPositions, secondsOfDamage, facing, size, quality)
+                    float quality) : base(rootPixelPosition, pixelPositions, secondsOfDamage, color, facing, size, quality)
     {
         SecondsOfVesselBuilt = 0f;
         BuildInProgress = false;

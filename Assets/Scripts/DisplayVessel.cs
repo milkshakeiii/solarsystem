@@ -18,7 +18,15 @@ public class DisplayVessel : MonoBehaviour
 
     public void Initialize(Vessel gameVessel)
     {
-
+        foreach (PixelComponent pixelComponent in gameVessel.PixelComponents())
+        {
+            foreach (PixelPosition position in pixelComponent.PixelPositions)
+            {
+                GameObject pixel = PixelPool.GetInstance().GetPixel(gameObject);
+                pixel.GetComponent<SpriteRenderer>().color = pixelComponent.Color;
+                pixel.transform.localPosition = new Vector3(position.X, position.Y, 0);
+            }
+        }
 
         transform.position = gameVessel.Position.ToVector2();
         transform.eulerAngles = new Vector3(0, gameVessel.Facing * Mathf.Rad2Deg, 0);

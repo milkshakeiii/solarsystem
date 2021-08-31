@@ -261,6 +261,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1885451309}
+  - component: {fileID: 1885451310}
   m_Layer: 0
   m_Name: PixelPool
   m_TagString: Untagged
@@ -282,6 +283,20 @@ Transform:
   m_Father: {fileID: 1799649709}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1885451310
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1885451308}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28fc140ec633e3146abd84a5a8e8990a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  PixelPrefab: {fileID: 8479533393583182810, guid: 3eb4165371685254aa4a95f1f2a4c5ee,
+    type: 3}
 --- !u!1001 &5735940192363803550
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -351,3 +366,72 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 4224d7eed89e63b45bfa8b2f2928e239, type: 3}
+--- !u!1001 &8233842305211310765
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 7718620863293104958, guid: 3eb4165371685254aa4a95f1f2a4c5ee,
+        type: 3}
+      propertyPath: m_RootOrder
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 7718620863293104958, guid: 3eb4165371685254aa4a95f1f2a4c5ee,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7718620863293104958, guid: 3eb4165371685254aa4a95f1f2a4c5ee,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7718620863293104958, guid: 3eb4165371685254aa4a95f1f2a4c5ee,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7718620863293104958, guid: 3eb4165371685254aa4a95f1f2a4c5ee,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7718620863293104958, guid: 3eb4165371685254aa4a95f1f2a4c5ee,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7718620863293104958, guid: 3eb4165371685254aa4a95f1f2a4c5ee,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7718620863293104958, guid: 3eb4165371685254aa4a95f1f2a4c5ee,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7718620863293104958, guid: 3eb4165371685254aa4a95f1f2a4c5ee,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7718620863293104958, guid: 3eb4165371685254aa4a95f1f2a4c5ee,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7718620863293104958, guid: 3eb4165371685254aa4a95f1f2a4c5ee,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8479533393583182810, guid: 3eb4165371685254aa4a95f1f2a4c5ee,
+        type: 3}
+      propertyPath: m_Name
+      value: Pixel
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 3eb4165371685254aa4a95f1f2a4c5ee, type: 3}
