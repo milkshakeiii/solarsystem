@@ -69,6 +69,13 @@ public struct Game
         firstGamestate.Asteroids = new List<Asteroid>();
         return firstGamestate;
     }
+
+    public Gamestate MostAdvancedGamestate()
+    {
+        if (Gamestates.Count < 1)
+            throw new UnityException("There are no gamestates");
+        return Gamestates[Gamestates.Count - 1];
+    }
 }
 
 [Serializable]
@@ -642,23 +649,23 @@ struct BeamHit
 static class GameplayFunctions
 {
 
-    public static Gamestate NextGamestate(Game game, Gamestate sourceGamestate, GameTick doTurn)
+    public static Gamestate NextGamestate(Game game, Gamestate sourceGamestate, GameTick doTick)
     {
         string sourceJson = JsonUtility.ToJson(sourceGamestate); //for purpose of making a deep copy
         Gamestate nextGamestate = JsonUtility.FromJson<Gamestate>(sourceJson);
 
-        if (doTurn.PlayerActions.Count != game.Players.Count)
-            throw new UnityException("Players in gameturn did not match players in game");
+        if (doTick.PlayerActions.Count != game.Players.Count)
+            throw new UnityException("Players in gametick did not match players in game");
 
-        for (int i = 0; i < doTurn.PlayerActions.Count; i++)
+        for (int i = 0; i < doTick.PlayerActions.Count; i++)
         {
             int playerIndex = i;
             if (game.Gamestates.Count % 2 == 1)
             {
-                playerIndex = doTurn.PlayerActions.Count - i - 1; //invert player order every other turn
+                playerIndex = doTick.PlayerActions.Count - i - 1; //invert player order every other tick
             }
             Player player = game.Players[playerIndex];
-            PlayerAction playerAction = doTurn.PlayerActions[playerIndex];
+            PlayerAction playerAction = doTick.PlayerActions[playerIndex];
             PlayerProgress playerProgress = nextGamestate.PlayerProgresses[playerIndex];
 
             if (!(playerProgress.Vessels.Count == playerAction.VesselCommands.Count))
