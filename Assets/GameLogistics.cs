@@ -18,17 +18,14 @@ public class GameLogistics : MonoBehaviour
         testGame.Gamestates.Add(testGamestate);
         game = testGame;
         turnSources = new List<TurnSource>() { new LocalTurnSource() };
-        for (int i = 0; i < turnSources.Count; i++)
-        {
-            turnSources[i].StartTurnPlanning(testGame, i);
-        }
+        turnSources[0].StartTurnPlanning(game, 0);
     }
 
     private bool AllTurnsReady()
     {
-        foreach (TurnSource commandSource in turnSources)
+        for (int i = 0; i < turnSources.Count; i++)
         {
-            if (!commandSource.TurnReady())
+            if (!turnSources[i].TurnReady(game, i))
             {
                 return false;
             }
@@ -44,9 +41,9 @@ public class GameLogistics : MonoBehaviour
             for (int i = 0; i < game.StatesPerTurn; i++)
             {
                 List<PlayerAction> actionsThisTick = new List<PlayerAction>();
-                foreach (TurnSource turnSource in turnSources)
+                for (int j = 0; j < turnSources.Count; j++)
                 {
-                    actionsThisTick.Add(turnSource.GetTurn()[i]);
+                    actionsThisTick.Add(turnSources[j].GetTurn(game, j)[i]);
                 }
                 GameTick nextTick = new GameTick(actionsThisTick);
                 Gamestate nextGamestate = GameplayFunctions.NextGamestate(game, game.MostAdvancedGamestate(), nextTick);
@@ -64,25 +61,25 @@ public abstract class TurnSource
 {
     public abstract void StartTurnPlanning(Game game, int playerIndex);
 
-    public abstract bool TurnReady();
+    public abstract bool TurnReady(Game game, int playerIndex);
 
-    public abstract List<PlayerAction> GetTurn();
+    public abstract List<PlayerAction> GetTurn(Game game, int playerIndex);
 }
 
 public class LocalTurnSource : TurnSource
 {
     public override void StartTurnPlanning(Game game, int playerIndex)
     {
-
+        CommandPanel.GetInstance().EnqueueCommandRequest(game, playerIndex);
     }
 
-    public override bool TurnReady()
+    public override bool TurnReady(Game game, int playerIndex)
     {
-
+        return CommandPanel.GetInstance().CommandsReady(game, playerIndex);
     }
 
-    public override List<PlayerAction> GetTurn()
+    public override List<PlayerAction> GetTurn(Game game, int playerIndex)
     {
-
+        return CommandPanel.GetInstance().GetCommands(game, playerIndex);
     }
 }

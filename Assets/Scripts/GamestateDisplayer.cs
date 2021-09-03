@@ -4,15 +4,22 @@ using UnityEngine;
 
 public class GamestateDisplayer : MonoBehaviour
 {
+    private static GamestateDisplayer instance;
+
+    public static GamestateDisplayer GetInstance()
+    {
+        return instance;
+    }
+
     public GameObject VesselPrefab;
 
     // Start is called before the first frame update
     void Start()
     {
-        
+        instance = this;
     }
 
-    private void Display(Gamestate gamestate)
+    public void Display(Gamestate gamestate)
     {
         foreach (Vessel vessel in gamestate.Vessels())
         {

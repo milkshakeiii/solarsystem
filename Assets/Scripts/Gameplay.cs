@@ -16,6 +16,13 @@ public struct Game
     public float TimeControl; //seconds
     public float TimeIncrement; //seconds
 
+    public Guid UUID;
+
+    public bool Uninitialized()
+    {
+        return UUID == Guid.Empty;
+    }
+
     public Game(int statesPerTurn,
                 int secondsPerTurn,
                 List<Gamestate> gamestates,
@@ -35,6 +42,7 @@ public struct Game
         StartTime = startTime;
         TimeControl = timeControl;
         TimeIncrement = timeIncrement;
+        UUID = System.Guid.NewGuid();
     }
 
     public float SecondsPerTick()
@@ -173,6 +181,8 @@ public struct Vessel
     public List<Collector> Collectors;
     public List<Shipyard> Shipyards;
 
+    public Guid UUID;
+
     public Vessel(Position position,
                   float facing,
                   LightHull lightHull,
@@ -192,6 +202,8 @@ public struct Vessel
         Lasers = lasers;
         Collectors = collectors;
         Shipyards = shipyards;
+
+        UUID = System.Guid.NewGuid();
     }
 
     public void AddComponent(PixelComponent component)
@@ -595,9 +607,9 @@ public struct GameTick
 [Serializable]
 public struct PlayerAction
 {
-    public List<Command> VesselCommands;
+    public Dictionary<Guid, Command> VesselCommands;
 
-    public PlayerAction(List<Command> vesselCommands)
+    public PlayerAction(Dictionary<Guid, Command> vesselCommands)
     {
         VesselCommands = vesselCommands;
     }
@@ -664,18 +676,20 @@ static class GameplayFunctions
             {
                 playerIndex = doTick.PlayerActions.Count - i - 1; //invert player order every other tick
             }
-            Player player = game.Players[playerIndex];
             PlayerAction playerAction = doTick.PlayerActions[playerIndex];
             PlayerProgress playerProgress = nextGamestate.PlayerProgresses[playerIndex];
 
             if (!(playerProgress.Vessels.Count == playerAction.VesselCommands.Count))
                 throw new UnityException("Player commands did not match player vessels");
 
-            for (int j = 0; j < playerAction.VesselCommands.Count; j++)
+            for (int j = 0; j < playerProgress.Vessels.Count; j++)
             {
-                Command command = playerAction.VesselCommands[j];
                 Vessel vessel = playerProgress.Vessels[j];
-                GameplayFunctions.DoCommand(command, j, game, nextGamestate, playerIndex);
+                if (playerAction.VesselCommands.ContainsKey(vessel.UUID))
+                {
+                    Command command = playerAction.VesselCommands[vessel.UUID];
+                    GameplayFunctions.DoCommand(command, j, game, nextGamestate, playerIndex);
+                }
             }
         }
 
