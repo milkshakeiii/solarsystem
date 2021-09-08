@@ -19,6 +19,9 @@ public class CommandPanel : MonoBehaviour
     private Dictionary<int, List<PlayerAction>> preparedCommands = new Dictionary<int, List<PlayerAction>>();
     private Game game;
 
+    public GameObject TickButtonPrefab;
+    public GameObject Timeline;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -57,6 +60,23 @@ public class CommandPanel : MonoBehaviour
         GamestateDisplayer.GetInstance().Display(game.Gamestates[startingGamestateIndex+ticksPastStart]);
     }
 
+    private void UISetup()
+    {
+        Debug.Log(game);
+        float minX = Timeline.GetComponent<RectTransform>().anchorMin.x;
+        float maxX = Timeline.GetComponent<RectTransform>().anchorMax.x;
+        float y = Timeline.GetComponent<RectTransform>().anchorMax.y;
+
+        int buttonCount = game.StatesPerTurn;
+
+        for (int i = 0; i < buttonCount; i++)
+        {
+            GameObject button = Instantiate(TickButtonPrefab, Timeline.transform.parent);
+            button.GetComponent<RectTransform>().anchorMin = new Vector2(minX + i * ((maxX - minX) / buttonCount), y);
+            button.GetComponent<RectTransform>().anchorMax = new Vector2(minX + i * ((maxX - minX) / buttonCount), 0.95f);
+        }
+    }
+
     private void BeginMakingCommands()
     {
         currentCommander = waitingCommandRequests.Dequeue();
@@ -68,14 +88,22 @@ public class CommandPanel : MonoBehaviour
             workingActions.Add(new PlayerAction(new Dictionary<Guid, Command>()));
         }
 
+        UISetup();
+
         SelectWorkingState(0);
+    }
+
+    private void SetUpForGame(Game forGame)
+    {
+        game = forGame;
+
     }
 
     public void EnqueueCommandRequest(Game forGame, int playerIndex)
     {
         if (game.Uninitialized())
         {
-            game = forGame;
+            SetUpForGame(forGame);
         }
         else if (forGame.UUID != game.UUID)
         {
