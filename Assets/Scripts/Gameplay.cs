@@ -647,6 +647,48 @@ public struct Command
         ActivateCollectors = activateCollectors;
         ActivateLasers = activateLasers;
     }
+
+    public static Command EmptyCommandForVessel(Vessel vessel)
+    {
+        List<bool> runShipyards = new List<bool>();
+        foreach (Shipyard _ in vessel.Shipyards)
+        {
+            runShipyards.Add(false);
+        }
+        List<bool> beginShipyardRuns = new List<bool>();
+        foreach (Shipyard _ in vessel.Shipyards)
+        {
+            beginShipyardRuns.Add(false);
+        }
+        List<bool> cancelShipyardRuns = new List<bool>();
+        foreach (Shipyard _ in vessel.Shipyards)
+        {
+            cancelShipyardRuns.Add(false);
+        }
+        List<Vessel> vesselsToBuild = new List<Vessel>();
+        foreach (Shipyard _ in vessel.Shipyards)
+        {
+            vesselsToBuild.Add(new Vessel());
+        }
+        List<bool> activateCollectors = new List<bool>();
+        foreach (Collector _ in vessel.Collectors)
+        {
+            activateCollectors.Add(false);
+        }
+        List<bool> activateLasers = new List<bool>();
+        foreach (Laser _ in vessel.Lasers)
+        {
+            activateLasers.Add(false);
+        }
+        return new Command(vessel.Facing,
+                           vessel.WorldPosition,
+                           runShipyards,
+                           beginShipyardRuns,
+                           cancelShipyardRuns,
+                           vesselsToBuild,
+                           activateCollectors,
+                           activateLasers);
+    }
 }
 
 struct BeamHit
