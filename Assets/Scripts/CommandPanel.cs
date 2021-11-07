@@ -40,7 +40,6 @@ public class CommandPanel : MonoBehaviour
 
     public void SelectWorkingState(int ticksPastStart)
     {
-        Debug.Log(ticksPastStart);
         currentSelectedOffset = ticksPastStart;
         Gamestate simulatedGamestate = game.MostAdvancedGamestate();
         for (int i = 0; i < currentSelectedOffset; i++)
@@ -62,7 +61,6 @@ public class CommandPanel : MonoBehaviour
         }
 
         GamestateDisplayer.GetInstance().Display(simulatedGamestate);
-        //Debug.Log(startingGamestateIndex + currentSelectedOffset);
     }
 
     public void LockInCommands()
