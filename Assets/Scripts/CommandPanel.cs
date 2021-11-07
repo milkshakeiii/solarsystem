@@ -40,6 +40,7 @@ public class CommandPanel : MonoBehaviour
 
     public void SelectWorkingState(int ticksPastStart)
     {
+        Debug.Log(ticksPastStart);
         currentSelectedOffset = ticksPastStart;
         Gamestate simulatedGamestate = game.MostAdvancedGamestate();
         for (int i = 0; i < currentSelectedOffset; i++)
@@ -61,7 +62,7 @@ public class CommandPanel : MonoBehaviour
         }
 
         GamestateDisplayer.GetInstance().Display(simulatedGamestate);
-        Debug.Log(startingGamestateIndex + currentSelectedOffset);
+        //Debug.Log(startingGamestateIndex + currentSelectedOffset);
     }
 
     public void LockInCommands()
@@ -83,7 +84,8 @@ public class CommandPanel : MonoBehaviour
             GameObject button = Instantiate(TickButtonPrefab, Timeline.transform.parent);
             button.GetComponent<RectTransform>().anchorMin = new Vector2(minX + i * ((maxX - minX) / buttonCount), y);
             button.GetComponent<RectTransform>().anchorMax = new Vector2(minX + i * ((maxX - minX) / buttonCount), 0.95f);
-            button.GetComponentInChildren<UnityEngine.UI.Button>().onClick.AddListener(() => SelectWorkingState(i));
+            int selectNumber = i;
+            button.GetComponentInChildren<UnityEngine.UI.Button>().onClick.AddListener(() => SelectWorkingState(selectNumber));
         }
     }
 
