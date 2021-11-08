@@ -109,6 +109,16 @@ public class CommandPanel : MonoBehaviour
         UISetup();
 
         SelectWorkingState(0);
+        SelectShip(0);
+    }
+
+    public void SelectShip(int shipIndex)
+    {
+        Vessel selectedShip = game.MostAdvancedGamestate().PlayerProgresses[currentCommander].Vessels[shipIndex];
+        if (selectedShip.PowerCore != null)
+        {
+
+        }
     }
 
     private void SetUpForGame(Game forGame)
