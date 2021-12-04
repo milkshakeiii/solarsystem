@@ -19,6 +19,7 @@ public class CommandPanel : MonoBehaviour
     private List<PlayerAction> workingActions;
     private Dictionary<int, List<PlayerAction>> preparedCommands = new Dictionary<int, List<PlayerAction>>();
     private Game game;
+    private int selectedVessel;
 
     public GameObject TickButtonPrefab;
     public GameObject Timeline;
@@ -72,6 +73,7 @@ public class CommandPanel : MonoBehaviour
     private void UISetup()
     {
         Debug.Log(game);
+        preparedCommands = new Dictionary<int, List<PlayerAction>>();
         SpawnTurnButtons(TickButtonPrefab,
                          Timeline.GetComponent<RectTransform>().anchorMax.y,
                          0.95f,
@@ -83,9 +85,9 @@ public class CommandPanel : MonoBehaviour
         return game.StatesPerTurn;
     }
 
-    public void WriteRotateCommand(int startTurn, int endTurn, int shipIndex, float targetRotation)
+    public void WriteRotateCommand(int startTurn, int endTurn, float targetRotation)
     {
-        Vessel selectedShip = game.MostAdvancedGamestate().PlayerProgresses[currentCommander].Vessels[shipIndex];
+        Vessel selectedShip = game.MostAdvancedGamestate().PlayerProgresses[currentCommander].Vessels[selectedVessel];
         for (int i = startTurn; i <= endTurn; i++)
         {
             Command modifyMe;
@@ -150,6 +152,7 @@ public class CommandPanel : MonoBehaviour
 
     public void SelectShip(int shipIndex)
     {
+        selectedVessel = shipIndex;
         Vessel selectedShip = game.MostAdvancedGamestate().PlayerProgresses[currentCommander].Vessels[shipIndex];
         if (selectedShip.PowerCore != null)
         {

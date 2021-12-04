@@ -38,6 +38,7 @@ public class GameLogistics : MonoBehaviour
     {
         if (AllTurnsReady())
         {
+            Debug.Log("All turns ready");
             for (int i = 0; i < game.StatesPerTurn; i++)
             {
                 List<PlayerAction> actionsThisTick = new List<PlayerAction>();

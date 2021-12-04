@@ -10,6 +10,7 @@ public class RotateCommandLine : MonoBehaviour
     private int vesselNumber;
 
     private int clickedButton = -1;
+    private float targetRotation = 0f;
 
     public void Initialize(CommandPanel newCommandPanel, int newVesselNumber)
     {
@@ -17,13 +18,30 @@ public class RotateCommandLine : MonoBehaviour
         vesselNumber = newVesselNumber;
 
         float y = GetComponent<RectTransform>().anchorMax.y;
-        commandPanel.SpawnTurnButtons(TickButtonPrefab, y, y, SetClickedButton);
+        commandPanel.SpawnTurnButtons(TickButtonPrefab, y, y, ButtonClicked);
     }
 
-    public void SetClickedButton(int number)
+    public void ButtonClicked(int number)
     {
-        clickedButton = number;
-        Debug.Log(clickedButton);
+        if (clickedButton == -1 || number < clickedButton)
+        {
+            clickedButton = number;
+            targetRotation = 0f;
+        }
+        else
+        {
+            Debug.Log(targetRotation);
+            commandPanel.WriteRotateCommand(clickedButton, number, targetRotation);
+            clickedButton = -1;
+        }
+    }
+
+    private void Update()
+    {
+        if (clickedButton != -1)
+        {
+            targetRotation += Input.GetAxis("Mouse ScrollWheel");
+        }
     }
 
 
