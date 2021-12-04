@@ -22,6 +22,7 @@ public class CommandPanel : MonoBehaviour
 
     public GameObject TickButtonPrefab;
     public GameObject Timeline;
+    public GameObject RotateCommandPrefab;
 
     // Start is called before the first frame update
     void Start()
@@ -71,17 +72,15 @@ public class CommandPanel : MonoBehaviour
     private void UISetup()
     {
         Debug.Log(game);
-        float y = Timeline.GetComponent<RectTransform>().anchorMax.y;
+        SpawnTurnButtons(TickButtonPrefab,
+                         Timeline.GetComponent<RectTransform>().anchorMax.y,
+                         0.95f,
+                         SelectWorkingState);
+    }
 
-        int buttonCount = game.StatesPerTurn;
-        for (int i = 0; i < buttonCount; i++)
-        {
-            GameObject button = Instantiate(TickButtonPrefab, Timeline.transform.parent);
-            button.GetComponent<RectTransform>().anchorMin = new Vector2(ButtonXForTurn(i), y);
-            button.GetComponent<RectTransform>().anchorMax = new Vector2(ButtonXForTurn(i), 0.95f);
-            int selectNumber = i;
-            button.GetComponentInChildren<UnityEngine.UI.Button>().onClick.AddListener(() => SelectWorkingState(selectNumber));
-        }
+    public int ButtonCount()
+    {
+        return game.StatesPerTurn;
     }
 
     public void WriteRotateCommand(int startTurn, int endTurn, int shipIndex, float targetRotation)
@@ -102,6 +101,18 @@ public class CommandPanel : MonoBehaviour
             workingActions[i].VesselCommands[selectedShip.UUID] = modifyMe;
         }
 
+    }
+
+    public void SpawnTurnButtons(GameObject buttonPrefab, float minY, float maxY, Action<int> callback)
+    {
+        for (int i = 0; i < ButtonCount(); i++)
+        {
+            GameObject button = Instantiate(buttonPrefab, Timeline.transform.parent);
+            button.GetComponent<RectTransform>().anchorMin = new Vector2(ButtonXForTurn(i), minY);
+            button.GetComponent<RectTransform>().anchorMax = new Vector2(ButtonXForTurn(i), maxY);
+            int selectNumber = i;
+            button.GetComponentInChildren<UnityEngine.UI.Button>().onClick.AddListener(() => callback(selectNumber));
+        }
     }
 
     private float ButtonXForTurn(int turnNumber)
@@ -142,7 +153,8 @@ public class CommandPanel : MonoBehaviour
         Vessel selectedShip = game.MostAdvancedGamestate().PlayerProgresses[currentCommander].Vessels[shipIndex];
         if (selectedShip.PowerCore != null)
         {
-
+            GameObject rotateCommand = Instantiate(RotateCommandPrefab, this.transform);
+            rotateCommand.GetComponent<RotateCommandLine>().Initialize(this, shipIndex);
         }
     }
 
