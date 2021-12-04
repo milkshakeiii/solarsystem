@@ -71,20 +71,45 @@ public class CommandPanel : MonoBehaviour
     private void UISetup()
     {
         Debug.Log(game);
-        float minX = Timeline.GetComponent<RectTransform>().anchorMin.x;
-        float maxX = Timeline.GetComponent<RectTransform>().anchorMax.x;
         float y = Timeline.GetComponent<RectTransform>().anchorMax.y;
 
         int buttonCount = game.StatesPerTurn;
-
         for (int i = 0; i < buttonCount; i++)
         {
             GameObject button = Instantiate(TickButtonPrefab, Timeline.transform.parent);
-            button.GetComponent<RectTransform>().anchorMin = new Vector2(minX + i * ((maxX - minX) / buttonCount), y);
-            button.GetComponent<RectTransform>().anchorMax = new Vector2(minX + i * ((maxX - minX) / buttonCount), 0.95f);
+            button.GetComponent<RectTransform>().anchorMin = new Vector2(ButtonXForTurn(i), y);
+            button.GetComponent<RectTransform>().anchorMax = new Vector2(ButtonXForTurn(i), 0.95f);
             int selectNumber = i;
             button.GetComponentInChildren<UnityEngine.UI.Button>().onClick.AddListener(() => SelectWorkingState(selectNumber));
         }
+    }
+
+    public void WriteRotateCommand(int startTurn, int endTurn, int shipIndex, float targetRotation)
+    {
+        Vessel selectedShip = game.MostAdvancedGamestate().PlayerProgresses[currentCommander].Vessels[shipIndex];
+        for (int i = startTurn; i <= endTurn; i++)
+        {
+            Command modifyMe;
+            if (workingActions[i].VesselCommands.ContainsKey(selectedShip.UUID))
+            {
+                modifyMe = workingActions[i].VesselCommands[selectedShip.UUID];
+            }
+            else
+            {
+                modifyMe = new Command();
+            }    
+            modifyMe.TargetRotation = targetRotation;
+            workingActions[i].VesselCommands[selectedShip.UUID] = modifyMe;
+        }
+
+    }
+
+    private float ButtonXForTurn(int turnNumber)
+    {
+        float minX = Timeline.GetComponent<RectTransform>().anchorMin.x;
+        float maxX = Timeline.GetComponent<RectTransform>().anchorMax.x;
+        int buttonCount = game.StatesPerTurn;
+        return minX + turnNumber * ((maxX - minX) / buttonCount);
     }
 
     private void BeginMakingCommands()
