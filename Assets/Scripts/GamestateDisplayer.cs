@@ -13,6 +13,8 @@ public class GamestateDisplayer : MonoBehaviour
 
     public GameObject VesselPrefab;
 
+    private List<GameObject> displayVessels = new List<GameObject>();
+
     // Start is called before the first frame update
     void Start()
     {
@@ -21,11 +23,16 @@ public class GamestateDisplayer : MonoBehaviour
 
     public void Display(Gamestate gamestate)
     {
+        foreach (GameObject displayVessel in displayVessels)
+        {
+            Destroy(displayVessel);
+        }
         foreach (Vessel vessel in gamestate.Vessels())
         {
             GameObject newVessel = Instantiate(VesselPrefab);
             newVessel.transform.parent = transform;
             newVessel.GetComponent<DisplayVessel>().Initialize(vessel);
+            displayVessels.Add(newVessel);
         }
     }
 

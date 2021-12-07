@@ -895,8 +895,8 @@ static class GameplayFunctions
         }
 
         //rotation
-        bool rightRotation = command.TargetRotation >= 0;
-        float desiredRotationAmount = Math.Abs(command.TargetRotation);
+        bool rightRotation = (command.TargetRotation - vessel.Facing) >= 0;
+        float desiredRotationAmount = Math.Abs(command.TargetRotation - vessel.Facing);
         float energyUsed = Math.Min(vessel.PowerCore.StoredEnergy, Vessel.MaxPortionMaxEnergySpentTurningPerSecond());
         float possibleRotationAmount = energyUsed * vessel.EnergyToRadiansTurningCoversion();
         float actualRotationAmount = Math.Min(desiredRotationAmount, possibleRotationAmount);
