@@ -85,10 +85,10 @@ public class CommandPanel : MonoBehaviour
         return game.StatesPerTurn;
     }
 
-    public void WriteRotateCommand(int startTurn, int endTurn, float targetRotation)
+    public void WriteRotateCommand(int startTurn, float targetRotation)
     {
         Vessel selectedShip = game.MostAdvancedGamestate().PlayerProgresses[currentCommander].Vessels[selectedVessel];
-        for (int i = startTurn; i <= endTurn; i++)
+        for (int i = startTurn; i < game.StatesPerTurn; i++)
         {
             Command modifyMe;
             if (workingActions[i].VesselCommands.ContainsKey(selectedShip.UUID))

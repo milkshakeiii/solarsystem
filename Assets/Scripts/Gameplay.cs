@@ -705,8 +705,10 @@ static class GameplayFunctions
 
     public static Gamestate NextGamestate(Game game, Gamestate sourceGamestate, GameTick doTick)
     {
+        Debug.Log(sourceGamestate.Vessels()[0].UUID);
         string sourceJson = JsonUtility.ToJson(sourceGamestate); //for purpose of making a deep copy
         Gamestate nextGamestate = JsonUtility.FromJson<Gamestate>(sourceJson);
+        Debug.Log(nextGamestate.Vessels()[0].UUID); //TODO: fix this bug
 
         if (doTick.PlayerActions.Count != game.Players.Count)
             throw new UnityException("Players in gametick did not match players in game");
@@ -714,10 +716,6 @@ static class GameplayFunctions
         for (int i = 0; i < doTick.PlayerActions.Count; i++)
         {
             int playerIndex = i;
-            if (game.Gamestates.Count % 2 == 1)
-            {
-                playerIndex = doTick.PlayerActions.Count - i - 1; //invert player order every other tick
-            }
             PlayerAction playerAction = doTick.PlayerActions[playerIndex];
             PlayerProgress playerProgress = nextGamestate.PlayerProgresses[playerIndex];
 

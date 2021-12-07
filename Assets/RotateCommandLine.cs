@@ -23,7 +23,7 @@ public class RotateCommandLine : MonoBehaviour
 
     public void ButtonClicked(int number)
     {
-        if (clickedButton == -1 || number < clickedButton)
+        if (clickedButton != number)
         {
             clickedButton = number;
             targetRotation = 0f;
@@ -31,7 +31,7 @@ public class RotateCommandLine : MonoBehaviour
         else
         {
             Debug.Log(targetRotation);
-            commandPanel.WriteRotateCommand(clickedButton, number, targetRotation);
+            commandPanel.WriteRotateCommand(clickedButton, targetRotation);
             clickedButton = -1;
         }
     }
