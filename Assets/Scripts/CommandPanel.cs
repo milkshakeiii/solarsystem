@@ -55,7 +55,7 @@ public class CommandPanel : MonoBehaviour
                 }
                 else
                 {
-                    playerActions.Add(new PlayerAction(new Dictionary<Guid, Command>()));
+                    playerActions.Add(new PlayerAction(new Dictionary<string, Command>()));
                 }
             }
             GameTick tick = new GameTick(playerActions);
@@ -134,7 +134,7 @@ public class CommandPanel : MonoBehaviour
         workingActions = new List<PlayerAction>();
         for (int i = 0; i < game.StatesPerTurn; i++)
         {
-            Dictionary<Guid, Command> emptyCommands = new Dictionary<Guid, Command>();
+            Dictionary<string, Command> emptyCommands = new Dictionary<string, Command>();
             foreach (Vessel vessel in game.MostAdvancedGamestate().PlayerProgresses[currentCommander].Vessels)
             {
                 Command emptyCommand = Command.EmptyCommandForVessel(vessel);
@@ -164,6 +164,7 @@ public class CommandPanel : MonoBehaviour
     private void SetUpForGame(Game forGame)
     {
         game = forGame;
+        Debug.Log(game.UUID);
     }
 
     public void EnqueueCommandRequest(Game forGame, int playerIndex)
@@ -181,7 +182,7 @@ public class CommandPanel : MonoBehaviour
 
     public bool CommandsReady(Game forGame, int playerIndex)
     {
-        if (forGame.UUID != game.UUID)
+        if (!forGame.UUID.Equals(game.UUID))
         {
             throw new UnityException("I'm doing commands for a different game");
         }

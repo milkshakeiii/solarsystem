@@ -16,11 +16,13 @@ public struct Game
     public float TimeControl; //seconds
     public float TimeIncrement; //seconds
 
-    public Guid UUID;
+    public string UUID;
+
+    private readonly bool initialized;
 
     public bool Uninitialized()
     {
-        return UUID == Guid.Empty;
+        return !initialized;
     }
 
     public Game(int statesPerTurn,
@@ -42,7 +44,9 @@ public struct Game
         StartTime = startTime;
         TimeControl = timeControl;
         TimeIncrement = timeIncrement;
-        UUID = System.Guid.NewGuid();
+        UUID = System.Guid.NewGuid().ToString();
+
+        initialized = true;
     }
 
     public float SecondsPerTick()
@@ -181,7 +185,7 @@ public struct Vessel
     public List<Collector> Collectors;
     public List<Shipyard> Shipyards;
 
-    public Guid UUID;
+    public string UUID;
 
     public Vessel(Position position,
                   float facing,
@@ -203,7 +207,7 @@ public struct Vessel
         Collectors = collectors;
         Shipyards = shipyards;
 
-        UUID = System.Guid.NewGuid();
+        UUID = System.Guid.NewGuid().ToString();
     }
 
     public void AddComponent(PixelComponent component)
@@ -607,9 +611,9 @@ public struct GameTick
 [Serializable]
 public struct PlayerAction
 {
-    public Dictionary<Guid, Command> VesselCommands;
+    public Dictionary<string, Command> VesselCommands;
 
-    public PlayerAction(Dictionary<Guid, Command> vesselCommands)
+    public PlayerAction(Dictionary<string, Command> vesselCommands)
     {
         VesselCommands = vesselCommands;
     }
@@ -705,10 +709,8 @@ static class GameplayFunctions
 
     public static Gamestate NextGamestate(Game game, Gamestate sourceGamestate, GameTick doTick)
     {
-        Debug.Log(sourceGamestate.Vessels()[0].UUID);
         string sourceJson = JsonUtility.ToJson(sourceGamestate); //for purpose of making a deep copy
         Gamestate nextGamestate = JsonUtility.FromJson<Gamestate>(sourceJson);
-        Debug.Log(nextGamestate.Vessels()[0].UUID); //TODO: fix this bug
 
         if (doTick.PlayerActions.Count != game.Players.Count)
             throw new UnityException("Players in gametick did not match players in game");
@@ -914,7 +916,10 @@ static class GameplayFunctions
         float moveAmountIfSufficientEnergy = Math.Min(desiredMoveAmount, possibleMoveAmount);
         float actualMoveAmount = moveAmountIfSufficientEnergy * (secondsOfEnergyAvailableThisTick / game.SecondsPerTick());
         Vector2 actualDisplacement = command.TargetDisplacement.ToVector2().normalized * actualMoveAmount;
-        vessel.PowerCore.StoredEnergy -= (actualMoveAmount / desiredMoveAmount) * game.SecondsPerTick() * energyCostPerSecondInDirection; // !
+        if (desiredMoveAmount != 0)
+        {
+            vessel.PowerCore.StoredEnergy -= (actualMoveAmount / desiredMoveAmount) * game.SecondsPerTick() * energyCostPerSecondInDirection; // !
+        }
         vessel.WorldPosition.X += actualDisplacement.x; // !
         vessel.WorldPosition.Y += actualDisplacement.y; // !
 
